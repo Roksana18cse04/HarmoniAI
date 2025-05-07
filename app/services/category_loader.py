@@ -7,5 +7,5 @@ def load_category_and_tools():
         data = json.load(f)
     categories = data["result"]["result"]["categories"]
     category_map = {cat["name"]: {"id": cat["id"], "slug": cat["slug"]} for cat in categories}
-    print (category_map)
+    print ("all categories:-------------", category_map)
     return category_map
