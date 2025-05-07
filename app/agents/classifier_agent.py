@@ -15,12 +15,13 @@ def classify_prompt_agent(prompt: str) -> dict:
         {"name": name, "slug": info['slug'], "id": info['id'], "desc": f"Description: {name} category"}
         for name, info in categories.items()
     ]
-
+    print("categories_list:------------------", categories_list)
     # Add example prompts to help GPT understand intent
     examples = [
         {"prompt": "Generate a landscape from a text description", "intent": "text-to-image"},
+        {"prompt": "photo of dog", "intent": "text-to-image"},
         {"prompt": "Change the style of an image to a painting", "intent": "image-to-image"},
-        {"prompt": "Convert a PDF document to editable text", "intent": "pdf-to-text"},
+        {"prompt": "Convert a PDF document to editable text", "intent": "pdf-to-text"}
     ]
     
     example_prompt = "\n".join([f"- {ex['prompt']} → {ex['intent']}" for ex in examples])
@@ -47,10 +48,11 @@ def classify_prompt_agent(prompt: str) -> dict:
         ],
         temperature=0.3
     )
-
+    print("response:------------------", response)
     # Parse and return LLM response
     try:
         result_json = json.loads(response.choices[0].message.content.strip())
+        print("result classify:------------------", result_json)
         return result_json
     except json.JSONDecodeError:
         return {

@@ -4,3 +4,7 @@ pydantic
 openai
 requests
 dotenv
+beautifulsoup4
+lxml
+python-dotenv
+cloudscraper
