@@ -10,7 +10,9 @@ API_KEY =  os.getenv("OPENAI_API_KEY")
 
 client = OpenAI(api_key=API_KEY)  # Or use OpenRouter
 
-def query_gpt(user_prompt, product_list):
+def shopping_agent(user_prompt):
+    print("test------------")
+    product_list = get_products_from_xml("https://www.kappa-tr.com/feed/standartV3")
     product_text = "\n".join([ 
         f"- {p['title']} | {p['color']} | {p['gender']} | {p['price']} | {p['link']}"
         for p in product_list[:30]
@@ -30,14 +32,6 @@ Return the best matches (max 5) with title, price, and link.
         messages=[{"role": "user", "content": prompt}],
         temperature=0.5,
     )
-    
+    print(f"Shopping agent response: {response.choices[0].message.content}")  # Debugging line
     return response.choices[0].message.content
-
-
-if __name__ == "__main__":
-    # Run it
-    products = get_products_from_xml("https://www.kappa-tr.com/feed/standartV3")
-    user_input = "I want a white unisex hat"
-    result = query_gpt(user_input, products)
-    print(result)
 
