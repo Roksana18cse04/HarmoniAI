@@ -23,5 +23,3 @@ def get_products_from_xml(url):
         }
         products.append(product)
     return products
-
-products = get_products_from_xml("https://www.kappa-tr.com/feed/standartV3")
