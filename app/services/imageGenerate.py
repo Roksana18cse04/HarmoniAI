@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 # Load environment variables
 load_dotenv(override=True)
 
-API_KEY = os.getenv("EACHLAB_API_KEY")
+API_KEY = os.getenv("EACHLABS_API_KEY")
 HEADERS = {
     "X-API-Key": API_KEY,
     "Content-Type": "application/json"
@@ -121,7 +121,7 @@ def generate_image(image_request: ImageRequest) -> dict:
 if __name__ == "__main__":
     # Example input
     image_request = ImageRequest(
-        model_name="stable-diffusion-3-5-large",
+        model_name="flux-1.1-pro",
         prompt="A dog wearing a hat, in a cartoon style, colorful and fun"
     )
 
