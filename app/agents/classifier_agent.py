@@ -21,25 +21,60 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
     ]
     # Add example prompts to help GPT understand intent
     examples = [
-        {"prompt": "Generate a landscape from a text description", "intent": "text-to-image"},
-        {"prompt": "photo of dog", "intent": "text-to-image"},
-        {"prompt": "Change the style of an image to a painting", "intent": "image-to-image"},
-        {"prompt": "Convert a PDF document to editable text", "intent": "pdf-to-text"}
+        {"prompt": "Generate a 3D model of a chair from a text prompt", "intent": "text-to-3d"},
+        {"prompt": "Convert this PDF manual into editable text", "intent": "pdf-to-text"},
+        {"prompt": "Describe the contents of this image", "intent": "image-to-text"},
+        {"prompt": "Turn this sketch into a realistic image", "intent": "image-to-image"},
+        {"prompt": "Animate this image into a short video", "intent": "image-to-video"},
+        {"prompt": "Rewrite this paragraph in simpler terms", "intent": "text-to-text"},
+        {"prompt": "Create a landscape from a text description", "intent": "text-to-image"},
+        {"prompt": "Turn this script into spoken dialogue", "intent": "text-to-voice"},
+        {"prompt": "Make a video from a story prompt", "intent": "text-to-video"},
+        {"prompt": "Summarize the content of this video", "intent": "video-to-text"},
+        {"prompt": "Convert this video into a stylized animation", "intent": "video-to-video"},
+        {"prompt": "Transcribe this audio file into text", "intent": "voice-to-text"},
+        {"prompt": "Translate this voice message to another language in the same voice", "intent": "voice-to-voice"},
+        {"prompt": "Train a custom AI model with this dataset", "intent": "training"},
+        {"prompt": "Connect two services using this API", "intent": "integration"},
+        {"prompt": "Use this tool to resize an image", "intent": "utilities"},
+        {"prompt": "Convert this photo into a 3D mesh", "intent": "image-to-3d"},
+
+        {"prompt": "I want to buy a phone", "intent": "shopping"},
+        {"prompt": "Show me some laptops under $1000", "intent": "shopping"},
+        {"prompt": "Is there a discount on shoes?", "intent": "shopping"},
+        {"prompt": "What’s the price of this item?", "intent": "shopping"},
+
+        {"prompt": "I want to watch a movie", "intent": "movie-recommendation"},
+        {"prompt": "Show me popular comedies", "intent": "movie-recommendation"},
+        {"prompt": "What's trending on Netflix?", "intent": "movie-recommendation"},
+        {"prompt": "Suggest an action film for tonight", "intent": "movie-recommendation"}
+
+
     ]
+
     
     example_prompt = "\n".join([f"- {ex['prompt']} → {ex['intent']}" for ex in examples])
 
     # System prompt to classify user input and suggest tools based on the category ID
     system_prompt = (
         "You are a classification agent. Your job is to:\n"
-        f"1. Classify the user's prompt into one of the following categories:\n{json.dumps(formatted_categories, indent=2)}\n"
-        f"3. Here are some examples of prompts and their correct classifications:\n{example_prompt}\n"
-        "Output strictly in this JSON format:\n"
+        "1. Identify the user's intent from the following categories.\n"
+        "2. Return the most appropriate category by slug and its ID.\n"
+        "3. If the user is asking to buy something, compare products, or explore deals, classify it as 'shopping'.\n"
+        "4. If the user is asking to watch, stream, or get recommendations for movies, classify it as 'movie-recommendation'.\n"
+        "5. If no category fits and it's not shopping- or movie-related, respond with slug as \"unknown\" and category_id as -1.\n"
+        "Assume the user is not uploading any file unless clearly stated. Short text prompts like 'photo of cat' typically mean generating an image from text.\n"
+        f"Categories:\n{json.dumps(formatted_categories, indent=2)}\n\n"
+        "Here are some example prompts and their correct classification:\n"
+        f"{example_prompt}\n\n"
+        "Respond strictly in this JSON format:\n"
         "{\n"
-        "  \"intent\": \"slug\",\n"
-        "  \"category_id\": number,\n"
+        "  \"intend\": \"slug\",\n"
+        "  \"category_id\": number\n"
         "}"
     )
+
+
 
     # Send prompt to OpenAI
     response = client.chat.completions.create(
@@ -56,7 +91,7 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
         return result_json
     except json.JSONDecodeError:
         return {
-            "intent": None,
+            "intend": None,
             "category_id": None,
             "error": "Failed to parse LLM response"
         }
