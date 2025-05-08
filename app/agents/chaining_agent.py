@@ -1,14 +1,32 @@
+from app.services.fetch_models_info import fetch_models_info
 from app.agents.classifier_agent import classify_prompt_agent
-from app.agents.tools_selector_agent import fetch_models_by_category_id
 
-def run_multi_agent_chain(user_prompt):
+
+def run_multi_agent_chain(prompt):
+    # fetch all models info from eachlabs
+    models_info=fetch_models_info()
+
+    # load all categories from models info
+    categories_list = models_info["result"]["result"]["categories"]
+    print("categories list:------------------", categories_list)
+
+    # classify the prompt using the models categories
+    model_category = classify_prompt_agent(prompt, categories_list)
+    print("model_category:------------------", model_category)
+
+    # fetch models based on the classified category
+    models_list = models_info["result"]["result"]["models"]
+    category_id = model_category["category_id"]
+    if category_id is not None:
+        models = [{
+            "title": model["title"], 
+            'name': model["slug"],
+            "thumbnail_url": model["thumbnail_url"],
+            "price": model["gpu_device_id"]["price"],
+        } for model in models_list if model["category"]["id"] == category_id]
+    else:
+        models = []
+    print("models:------------------", models)      
     
-    result = classify_prompt_agent(user_prompt)
-    cat_id = result.get("category_id")
 
-    tools = fetch_models_by_category_id(cat_id)
-    return {
-        "intent": result.get("intent"),
-        "category_id": cat_id,
-        "suggested_models": tools
-    }
+    return models
