@@ -11,10 +11,9 @@ API_KEY =  os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=API_KEY)  # Or use OpenRouter
 
 def query_gpt(user_prompt, product_list):
-    # You can truncate or limit product count if needed
     product_text = "\n".join([ 
         f"- {p['title']} | {p['color']} | {p['gender']} | {p['price']} | {p['link']}"
-        for p in product_list[:30]  # limit for token size
+        for p in product_list[:30]
     ])
 
     prompt = f"""You are a helpful shopping assistant.
@@ -26,14 +25,14 @@ Now answer this user query: "{user_prompt}"
 Return the best matches (max 5) with title, price, and link.
 """
 
-    response = client.completions.create(
+    response = client.chat.completions.create(
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],
         temperature=0.5,
     )
+    
+    return response.choices[0].message.content
 
-    # Correct way to access the content
-    return response.choices[0].message['content']
 
 if __name__ == "__main__":
     # Run it

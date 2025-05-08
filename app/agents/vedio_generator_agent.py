@@ -21,7 +21,7 @@ def create_prediction():
   "image_url": "https://storage.googleapis.com/magicpoint/models/man.png",
   "mode": "PRO",
   "model_name": "kling-v1-6",
-  "prompt": "a man is talking"
+  "prompt": "a man who is shouting very loudly",
 }
     }
 
