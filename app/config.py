@@ -1,18 +1,7 @@
 # app/config.py
 
 import os
-
-
 from pydantic import BaseModel
-
-class ImageRequest(BaseModel):
-    model_name: str
-    prompt: str
-
-class TextToVideoRequest(BaseModel):
-    model_name: str
-    prompt: str
-
 class ImageToVideoRequest(BaseModel):       
     model_name: str
     prompt: str

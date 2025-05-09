@@ -1,5 +1,7 @@
 import requests
+import time
 import os
+from app.config import ImageRequest
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -11,17 +13,7 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-
-def create_prediction(prompt: str,model_name : str) -> str:
-    """
-    Create a prediction request to the Each Labs API.
-
-    Args:
-        prompt (str): The text prompt for image generation.
-
-    Returns:
-        str: The prediction ID.
-    """
+def create_prediction(model_name,image_url, style_slug,prompt):
     response = requests.post(
         "https://api.eachlabs.ai/v1/prediction/",
         headers=HEADERS,
@@ -29,15 +21,15 @@ def create_prediction(prompt: str,model_name : str) -> str:
             "model": model_name,
             "version": "0.0.1",
             "input": {
-                "prompt": prompt,
-                "aspect_ratio": "1:1",
-                "output_format": "webp",
-                "output_quality": 90,    
-            }   
+                "image_url_1": image_url,
+                "style_slug": style_slug,
+                "prompt": prompt
+            }
         }
     )
-    response.raise_for_status()
     prediction = response.json()
+    
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
+    
     return prediction["predictionID"]
