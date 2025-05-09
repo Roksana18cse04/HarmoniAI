@@ -1,10 +1,9 @@
 import requests
-import time
 import os
-from app.services.image_get_prediction import get_prediction
-from app.services.textToImage_create_prediction import create_prediction
+from app.schemas.TextToImage import TextToImageRequest
 from dotenv import load_dotenv
-
+from app.services.textToImage_create_prediction import create_prediction
+from app.services.image_get_prediction import get_prediction
 # Load environment variables
 load_dotenv(override=True)
 
@@ -14,7 +13,16 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-def imageGenerate(image_request) -> dict:
+def text_to_generate_image(image_request: TextToImageRequest) -> dict:
+    """
+    Generate an image using the Each Labs API.
+
+    Args:
+        image_request (TextToImageRequest): The request object containing image generation parameters.
+
+    Returns:
+        dict: A dictionary containing the prompt and the generated image URL, or None if the generation failed.
+    """
     try:
         # Create prediction and get prediction ID
         prediction_id = create_prediction(image_request.prompt, image_request.model_name)
@@ -33,15 +41,15 @@ def imageGenerate(image_request) -> dict:
         return {"prompt": image_request.prompt, "image_url": None}
 
 
-# if __name__ == "__main__":
-#     # Example input
-#     image_request = TextToImageRequest(
-#         model_name="flux-schnell",
-#         prompt="A dog wearing a hat, in a cartoon style, colorful and fun"
-#     )
+if __name__ == "__main__":
+    # Example input
+    image_request = TextToImageRequest(
+        model_name="flux-dev-realism",
+        prompt="A dog wearing a hat, in a cartoon style, colorful and fun"
+    )
 
-#     # Generate image and get result
-#     result = imageGenerate(image_request)
+    # Generate image and get result
+    result = text_to_generate_image(image_request)
 
-#     # Print the result in the specified format
-#     print(result)
+    # Print the result in the specified format
+    print(result)
