@@ -38,6 +38,7 @@ def text_to_generate_image(image_request: TextToImageRequest) -> dict:
     except Exception as e:
         # Handle any errors during the process
         print(f"Error generating image: {e}")
+
         return {"prompt": image_request.prompt, "image_url": None}
 
 

@@ -1,34 +1,36 @@
 import requests
-import os
 import time
+import os
 
 from openai import OpenAI
 from dotenv import load_dotenv
 
+
 # Load environment variables
 load_dotenv(override=True)
+
+# Initialize OpenAI client with the API key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
+
 API_KEY = os.getenv("EACHLABS_API_KEY")
 HEADERS = {
     "X-API-Key": API_KEY,
     "Content-Type": "application/json"
 }
-
-def create_prediction(model_name: str, prompt: str, reference_image: str, style_slug: str) -> str:
+    
+def create_prediction(audio_url:str,image_url:str):
     response = requests.post(
         "https://api.eachlabs.ai/v1/prediction/",
         headers=HEADERS,
         json={
-            "model": model_name,
+            "model": "omnihuman",
             "version": "0.0.1",
             "input": {
-                "reference_image": reference_image,  # Change from input_image/image_url
-                "prompt": prompt,
-                "style": style_slug,
-                "output_format": "webp",
-                "output_quality": 90
-            },
+            "mode": "normal",
+            "audio_url": audio_url,
+            "image_url": image_url
+        },
             "webhook_url": ""
         }
     )
@@ -45,11 +47,11 @@ def get_prediction(prediction_id):
             f"https://api.eachlabs.ai/v1/prediction/{prediction_id}",
             headers=HEADERS
         ).json()
-        print(f"Prediction status: {result}")
+        
         if result["status"] == "success":
             return result
         elif result["status"] == "error":
             raise Exception(f"Prediction failed: {result}")
         
-        time.sleep(1)  # Wait before polling again
+        time.sleep(1)  
         

@@ -6,8 +6,8 @@ class ImageToImageRequest(BaseModel):
     model_name: str
     prompt: str
     style_slug: str
-    image_url: Optional[str] = None  # For URL input option
-    file: Optional[UploadFile] = None  # For file upload option
+    reference_image: Optional[str] = None  # Change from image_url to reference_image
+    file: Optional[UploadFile] = None
     
 class ImageToImageResponse(BaseModel):
     prompt: str
