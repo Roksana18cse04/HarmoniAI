@@ -1,10 +1,7 @@
 # app/config.py
 
 import os
-
-
 from pydantic import BaseModel
-
 class ImageToVideoRequest(BaseModel):       
     model_name: str
     prompt: str
