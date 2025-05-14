@@ -28,7 +28,6 @@ def run_multi_agent_chain(prompt):
         if category_id is not None:
             models = [{
                 "prompt": prompt,
-                "slug": model_category.get("slug", ""),  # Use .get() to avoid KeyError
                 "title": model["title"], 
                 'name': model["slug"],
                 "thumbnail_url": model["thumbnail_url"],
