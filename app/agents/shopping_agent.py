@@ -38,13 +38,13 @@ def shopping_agent(user_prompt):
 
 
     prompt = f"""You are a helpful shopping assistant.
-Here is a list of products:
-{product_text}
+    Here is a list of products:
+    {product_text}
 
-Now answer this user query: "{user_prompt}"
+    Now answer this user query: "{user_prompt}"
 
-Return the best matches with title, price, link and image.
-"""
+    Return the best matches with title, price, link and image.
+    """
 
     response = client.chat.completions.create(
         model="gpt-4",
