@@ -31,17 +31,3 @@ def imageGenerate(image_request) -> dict:
         # Handle any errors during the process
         print(f"Error generating image: {e}")
         return {"prompt": image_request.prompt, "image_url": None}
-
-
-# if __name__ == "__main__":
-#     # Example input
-#     image_request = TextToImageRequest(
-#         model_name="flux-schnell",
-#         prompt="A dog wearing a hat, in a cartoon style, colorful and fun"
-#     )
-
-#     # Generate image and get result
-#     result = imageGenerate(image_request)
-
-#     # Print the result in the specified format
-#     print(result)
