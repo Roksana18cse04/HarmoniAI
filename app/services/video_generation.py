@@ -61,18 +61,18 @@ def generate_video(data: TextToVideoRequest) -> str:
         print(f"Error while fetching prediction: {e}")
         raise
 
-# # Example usage
-# if __name__ == "__main__":
-#     prompt = input("Enter the prompt for video generation: ")
-#     model_name = input("Enter the model name: ")
-#     duration = int(input("Enter the duration (in seconds): "))
+# Example usage
+if __name__ == "__main__":
+    prompt = input("Enter the prompt for video generation: ")
+    model_name = input("Enter the model name: ")
+    duration = int(input("Enter the duration (in seconds): "))
 
-#     try:
-#         # Generate video and get the result
-#         video_url = generate_video(prompt, model_name, duration)
-#         if video_url:
-#             print(f"Generated video URL: {video_url}")
-#         else:
-#             raise Exception("No video URL returned.")
-#     except Exception as e:
-#         print(f"Error: {e}")
+    try:
+        # Generate video and get the result
+        video_url = generate_video(prompt, model_name, duration)
+        if video_url:
+            print(f"Generated video URL: {video_url}")
+        else:
+            raise Exception("No video URL returned.")
+    except Exception as e:
+        print(f"Error: {e}")

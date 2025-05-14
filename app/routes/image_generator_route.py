@@ -4,8 +4,8 @@ from app.agents.image_generator_agent import text_to_generate_image
 from app.agents.image_to_image_generate_agents import image_to_generate_image
 from app.schemas.TextToImage import TextToImageRequest
 from app.schemas.Image_To_Image import ImageToImageRequest, ImageToImageResponse
-from app.services.UploadFile import upload_image_to_cloudinary
-
+from app.config import cloudinary
+import cloudinary.uploader
 
 router = APIRouter()
 
@@ -24,20 +24,18 @@ async def image_to_image_generate(
     prompt: str = Form(""),
     file: UploadFile = File(...)
 ):
-    contents = await file.read()
-    temp_path = f"temp_{file.filename}"
-    with open(temp_path, "wb") as f:
-        f.write(contents)
-    image_url = upload_image_to_cloudinary(temp_path, folder="image")
-    import os
-    os.remove(temp_path)
+    image_bytes = await file.read()
+    upload_result = cloudinary.uploader.upload(image_bytes, resource_type="image")
+    image_url = upload_result["secure_url"]
+    print(f"Uploaded image to Cloudinary: {image_url}")
+    # Extract the secure URL from the upload response
 
     data = ImageToImageRequest(
-        model_name=model_name,
-        prompt=prompt,
-        style_slug=style,  # schema uses style_slug, API expects 'style'
-        image_url=image_url
-    )
+    model_name=model_name,
+    prompt=prompt,
+    style_slug=style,
+    reference_image=image_url  # Change from image_url=image_url
+)
     result = image_to_generate_image(data)
     if result is None:
         return ImageToImageResponse(

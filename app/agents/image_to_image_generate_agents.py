@@ -26,10 +26,10 @@ def image_to_generate_image(image_request: ImageToImageRequest) -> dict:
     try:
         # Use the image_url already provided (uploaded to Cloudinary in the route)
         prediction_id = create_prediction(
-            image_request.model_name,
-            image_request.prompt,
-            image_request.image_url,
-            image_request.style_slug
+        image_request.model_name,
+        image_request.prompt,
+        image_request.reference_image,  # Change from image_url
+        image_request.style_slug
         )
         print(f"Prediction created: {prediction_id}")
         
