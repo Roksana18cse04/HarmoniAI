@@ -29,7 +29,7 @@ Your job is to:
         temperature=0.7,
         max_tokens=500
     )
-    print("response-------------", response)
+    # print("response-------------", response)
     result_content = response.choices[0].message.content.strip()  # Access message content here
     return result_content
 
