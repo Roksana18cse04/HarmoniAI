@@ -13,3 +13,5 @@ python-multipart
 
 gTTS 
 pydub
+pinecone
+apscheduler
