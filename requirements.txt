@@ -10,10 +10,11 @@ python-dotenv
 openai
 cloudinary
 python-multipart
+
 gTTS 
 pydub
+faiss-cpu
+apscheduler
 moviepy
 ffmpeg-python
 ffmpeg
-pinecone
-apscheduler
