@@ -28,8 +28,6 @@ def get_products_from_xml(url):
             "category": get("g:product_type")
         }
         products.append(product)
-
-    print(f"-------- Fetched {len(products)} products from {url}")
     return products
 
 

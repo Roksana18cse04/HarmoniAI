@@ -13,5 +13,5 @@ python-multipart
 
 gTTS 
 pydub
-pinecone
+faiss-cpu
 apscheduler
