@@ -46,7 +46,6 @@ def get_prediction(prediction_id):
        
         time.sleep(1)  # Wait before polling again
  
- 
 def generate_video(data: TextToVideoRequest) -> str:
     # Generate a video based on the prompt, model name, and duration
     prediction_id = create_prediction(data.model_name, data.prompt, data.duration)

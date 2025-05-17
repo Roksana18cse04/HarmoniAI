@@ -25,7 +25,6 @@ Now answer this user query: "{user_prompt}"
 
 Return the best matches with title, price, link and image.
 """
-
     response = client.chat.completions.create(  
         model="gpt-4",
         messages=[{"role": "user", "content": prompt}],

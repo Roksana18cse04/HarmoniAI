@@ -15,3 +15,6 @@ gTTS
 pydub
 faiss-cpu
 apscheduler
+moviepy
+ffmpeg-python
+ffmpeg
