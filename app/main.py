@@ -8,6 +8,8 @@ from app.routes.content_generator_route import router as content_creator_router
 from app.routes.caption_generator_route import router as caption_generator_router
 
 from app.services.xml_to_faiss import fetch_and_index_all_products
+import uvicorn
+import os
 
 # from contextlib import asynccontextmanager
 # import app.scheduler as scheduler
@@ -37,3 +39,9 @@ async def root():
     return {"message": "Welcome to the Multi-Agent System!"}
 
 
+def main():
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
+
+if __name__ == "__main__":
+    main()
