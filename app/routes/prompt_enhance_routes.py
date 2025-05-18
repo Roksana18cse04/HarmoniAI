@@ -20,8 +20,8 @@ async def get_enhanced_prompt(request: EnhanceRequest) -> EnhanceResponse:
     
     # Return the response using the EnhanceResponse Pydantic model
     return EnhanceResponse(
-        status="success",
         base_prompt=base_prompt,
         target_model=target_model,
-        enhanced_prompt=enhanced_prompt
+        enhanced_prompt=enhanced_prompt,
+        intend=request.intend
     )
