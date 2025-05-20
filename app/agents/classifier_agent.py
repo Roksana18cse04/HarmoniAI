@@ -21,6 +21,10 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
     ]
     # Add example prompts to help GPT understand intent
     examples = [
+        {"prompt": "a fantasy castle on a mountain", "intent": "text-to-image"},
+        {"prompt": "photo of a cat", "intent": "text-to-image"},
+        {"prompt": "sunset over the ocean", "intent": "text-to-image"},
+        {"prompt": "a cartoon dog with sunglasses", "intent": "text-to-image"},
         {"prompt": "Generate a 3D model of a chair from a text prompt", "intent": "text-to-3d"},
         {"prompt": "Convert this PDF manual into editable text", "intent": "pdf-to-text"},
         {"prompt": "Describe the contents of this image", "intent": "image-to-text"},
@@ -63,16 +67,18 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
 
     # System prompt to classify user input and suggest tools based on the category ID
     system_prompt = (
-    "You are an intent classification agent. Your task is to:\n"
-    "1. Read the user's prompt and identify its high-level intent from the list of categories.\n"
-    "2. If the user is asking a factual question, general knowledge, current events, or information (e.g., about AI, weather, history), classify it as 'question-answering'.\n"
-    "3. If the user is asking to buy, compare, or browse products, classify as 'shopping'.\n"
-    "4. If the user is asking about movies, TV shows, or streaming content, classify as 'movie-recommendation'.\n"
-    "5. If none of these apply, return 'unknown' with category_id -1.\n"
-    f"\nCategories:\n{json.dumps(formatted_categories, indent=2)}\n"
-    "\nRespond ONLY in this JSON format:\n"
-    "{\n  \"intent\": \"slug\",\n  \"category_id\": number\n}"
-)
+        "You are an intent classification agent. Your task is to:\n"
+        "1. Read the user's prompt and identify its high-level intent from the list of categories.\n"
+        "2. If the user is asking a factual question, general knowledge, current events, or information (e.g., about AI, weather, history), classify it as 'question-answering'.\n"
+        "3. If the user is asking to buy, compare, or browse products, classify as 'shopping'.\n"
+        "4. If the user is asking about movies, TV shows, or streaming content, classify as 'movie-recommendation'.\n"
+        "5. Otherwise, classify the intent based on common AI tasks such as image generation, text summarization, voice synthesis, or file conversion using the most relevant intent slug from the category list.\n"
+        "\nHere are some example prompts and their intents:\n"
+        f"{example_prompt}\n"
+        f"\nCategories:\n{json.dumps(formatted_categories, indent=2)}\n"
+        "\nRespond ONLY in this JSON format:\n"
+        "{\n  \"intent\": \"slug\",\n  \"category_id\": number\n}"
+    )
 
 
 
