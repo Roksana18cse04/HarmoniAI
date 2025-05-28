@@ -9,7 +9,6 @@ from app.routes.content_generator_route import router as content_creator_router
 
 from app.routes.caption_generator_route import router as caption_generator_router
 from app.routes.merge_video_audio_routs import router as merge_video_audio_router
-from app.services.xml_to_pinecone import fetch_and_index_all_products
 from app.routes.caption_generator_route import router as caption_generator_router
 
 from app.services.xml_to_faiss import fetch_and_index_all_products
