@@ -45,7 +45,7 @@ def get_prediction(prediction_id):
             raise Exception(f"Prediction failed: {result}")
        
         time.sleep(1)  # Wait before polling again
- 
+
  
 def generate_video(data: TextToVideoRequest) -> str:
     # Generate a video based on the prompt, model name, and duration
@@ -76,3 +76,4 @@ if __name__ == "__main__":
             raise Exception("No video URL returned.")
     except Exception as e:
         print(f"Error: {e}")
+

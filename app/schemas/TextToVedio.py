@@ -1,5 +1,5 @@
 from pydantic import BaseModel
 class TextToVideoRequest(BaseModel):
-    model_name: str
     prompt: str
+    model_name: str
     duration: int

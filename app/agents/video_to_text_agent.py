@@ -1,5 +1,5 @@
 import os
-from app.services.video_generation import get_prediction,create_prediction
+from app.services.video_to_text import get_prediction,create_prediction
 
 
 def video_to_text_generate(video_url:str):

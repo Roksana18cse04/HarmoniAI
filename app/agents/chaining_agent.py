@@ -1,8 +1,10 @@
 from app.services.fetch_models_info import fetch_models_info
 from app.agents.classifier_agent import classify_prompt_agent
+
 from app.agents.shopping_agent import shopping_agent  
 from app.agents.qa_agent import question_answer_agent 
 from app.services.correct_symspell import correct_spelling
+
 
 
 def run_multi_agent_chain(prompt):
@@ -28,6 +30,7 @@ def run_multi_agent_chain(prompt):
     # classify the prompt using the models categories
     model_category = classify_prompt_agent(prompt, categories_list)
     print("model_category:------------------", model_category)
+
     print("model_category['intent']:------------------", model_category["intent"])
     if model_category["intent"]=="unknown":
         return "Sorry, I can't help with that."
@@ -42,7 +45,7 @@ def run_multi_agent_chain(prompt):
             "result": response,
             "intent": "question-answering"
         }
-    
+  
     else:
         # fetch models based on the classified category
         models_list = models_info["result"]["result"]["models"]

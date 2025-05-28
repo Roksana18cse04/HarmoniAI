@@ -4,6 +4,7 @@ class EnhanceRequest(BaseModel):
     target_model: str
     intend: str
 
+
 class EnhanceResponse(BaseModel):
     status: str
     base_prompt: str
