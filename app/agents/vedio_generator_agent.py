@@ -1,3 +1,5 @@
+import requests
+import time
 import os
 from app.services.video_generation import get_prediction,create_prediction 
 from app.schemas.TextToVedio import TextToVideoRequest
