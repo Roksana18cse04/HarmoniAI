@@ -6,9 +6,15 @@ from app.routes.audio_videoRoute import router as audio_video_router
 from app.routes.prompt_enhance_routes import enhance_router as enhance_prompt_router
 from app.routes.content_generator_route import router as content_creator_router
 
+
 from app.routes.caption_generator_route import router as caption_generator_router
 from app.routes.merge_video_audio_routs import router as merge_video_audio_router
 from app.services.xml_to_pinecone import fetch_and_index_all_products
+from app.routes.caption_generator_route import router as caption_generator_router
+
+from app.services.xml_to_faiss import fetch_and_index_all_products
+import uvicorn
+import os
 
 # from contextlib import asynccontextmanager
 # import app.scheduler as scheduler
@@ -33,8 +39,10 @@ async def manual_refresh():
     fetch_and_index_all_products()
     return {"message": "Product index refreshed manually!"}
 
+
 app.include_router(content_creator_router, prefix="/content-creator", tags=["create-content"])
 app.include_router(merge_video_audio_router,prefix="/merge-audio-video",tags=["merge-audio-video"])
+
 
 
 @app.get("/")
@@ -42,3 +50,9 @@ async def root():
     return {"message": "Welcome to the Multi-Agent System!"}
 
 
+def main():
+    port = int(os.environ.get("PORT", 10000))
+    uvicorn.run("app.main:app", host="0.0.0.0", port=port, reload=True)
+
+if __name__ == "__main__":
+    main()

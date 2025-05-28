@@ -1,26 +1,51 @@
 from app.services.fetch_models_info import fetch_models_info
 from app.agents.classifier_agent import classify_prompt_agent
-from app.agents.shopping_agent import shopping_agent    
+
+from app.agents.shopping_agent import shopping_agent  
+from app.agents.qa_agent import question_answer_agent 
+from app.services.correct_symspell import correct_spelling
+
 
 
 def run_multi_agent_chain(prompt):
+    # correct prompt spelling 
+    prompt= correct_spelling(prompt)
+
     # fetch all models info from eachlabs
     models_info=fetch_models_info()
 
     # load all categories from models info
     categories_list = models_info["result"]["result"]["categories"]
+    # Inject custom category
+    categories_list.append({
+        "id": 9999,  # Use a high unused ID to avoid collisions
+        "name": "Question Answering",
+        "slug": "question-answering",
+        "count": 1
+        
+    })
+
     print("categories list:------------------", categories_list)
 
     # classify the prompt using the models categories
     model_category = classify_prompt_agent(prompt, categories_list)
     print("model_category:------------------", model_category)
-    print("model_category['intend']:------------------", model_category["intend"])
-    if model_category["intend"]=="unknown":
+
+    print("model_category['intent']:------------------", model_category["intent"])
+    if model_category["intent"]=="unknown":
         return "Sorry, I can't help with that."
-    elif model_category["intend"]=="shopping":
+    elif model_category["intent"]=="shopping":
         # if the category is shopping, use the shopping agent to get product info
         shopping_result = shopping_agent(prompt)
         return shopping_result
+    elif model_category["intent"]=="question-answering":
+        response= question_answer_agent(prompt)
+        print("result------", response)
+        return {
+            "result": response,
+            "intent": "question-answering"
+        }
+  
     else:
         # fetch models based on the classified category
         models_list = models_info["result"]["result"]["models"]

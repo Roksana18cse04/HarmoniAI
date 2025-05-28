@@ -21,6 +21,11 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
     ]
     # Add example prompts to help GPT understand intent
     examples = [
+
+        {"prompt": "a fantasy castle on a mountain", "intent": "text-to-image"},
+        {"prompt": "photo of a cat", "intent": "text-to-image"},
+        {"prompt": "sunset over the ocean", "intent": "text-to-image"},
+        {"prompt": "a cartoon dog with sunglasses", "intent": "text-to-image"},
         {"prompt": "Generate a 3D model of a chair from a text prompt", "intent": "text-to-3d"},
         {"prompt": "Convert this PDF manual into editable text", "intent": "pdf-to-text"},
         {"prompt": "Describe the contents of this image", "intent": "image-to-text"},
@@ -47,7 +52,12 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
         {"prompt": "I want to watch a movie", "intent": "movie-recommendation"},
         {"prompt": "Show me popular comedies", "intent": "movie-recommendation"},
         {"prompt": "What's trending on Netflix?", "intent": "movie-recommendation"},
-        {"prompt": "Suggest an action film for tonight", "intent": "movie-recommendation"}
+        {"prompt": "Suggest an action film for tonight", "intent": "movie-recommendation"},
+        {"prompt": "What is the capital of France?", "intent": "question-answering"},
+        {"prompt": "Who is the president of the USA?", "intent": "question-answering"},
+        {"prompt": "What is the latest news in Bangladesh?", "intent": "question-answering"},
+        {"prompt": "Tell me something about ChatGPT", "intent": "question-answering"},
+        {"prompt": "What's the weather today in London?", "intent": "question-answering"}
 
 
     ]
@@ -57,25 +67,18 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
 
     # System prompt to classify user input and suggest tools based on the category ID
     system_prompt = (
-        "You are a classification agent. Your job is to:\n"
-        "1. Identify the user's intent from the following categories.\n"
-        "2. Return the most appropriate category by slug and its ID.\n"
-        "3. If the user is asking to buy something, compare products, or explore deals, classify it as 'shopping'.\n"
-        "4. If the user is asking to watch, stream, or get recommendations for movies, classify it as 'movie-recommendation'.\n"
-        "5. If no category fits and it's not shopping- or movie-related, respond with slug as \"unknown\" and category_id as -1.\n"
-        "Assume the user is not uploading any file unless clearly stated. Short text prompts like 'photo of cat' typically mean generating an image from text.\n"
-        f"Categories:\n{json.dumps(formatted_categories, indent=2)}\n\n"
-        "Here are some example prompts and their correct classification:\n"
-        f"{example_prompt}\n\n"
-        "Respond strictly in this JSON format:\n"
-        "{\n"
-        "  \"intend\": \"slug\",\n"
-        "  \"category_id\": number\n"
-        "}"
+        "You are an intent classification agent. Your task is to:\n"
+        "1. Read the user's prompt and identify its high-level intent from the list of categories.\n"
+        "2. If the user is asking a factual question, general knowledge, current events, or information (e.g., about AI, weather, history), classify it as 'question-answering'.\n"
+        "3. If the user is asking to buy, compare, or browse products, classify as 'shopping'.\n"
+        "4. If the user is asking about movies, TV shows, or streaming content, classify as 'movie-recommendation'.\n"
+        "5. Otherwise, classify the intent based on common AI tasks such as image generation, text summarization, voice synthesis, or file conversion using the most relevant intent slug from the category list.\n"
+        "\nHere are some example prompts and their intents:\n"
+        f"{example_prompt}\n"
+        f"\nCategories:\n{json.dumps(formatted_categories, indent=2)}\n"
+        "\nRespond ONLY in this JSON format:\n"
+        "{\n  \"intent\": \"slug\",\n  \"category_id\": number\n}"
     )
-
-
-
     # Send prompt to OpenAI
     response = client.chat.completions.create(
         model="gpt-4",
@@ -88,6 +91,7 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
     # Parse and return LLM response
     try:
         result_json = json.loads(response.choices[0].message.content.strip())
+        print("prompt classifier result:------------------", result_json)
         return result_json
     except json.JSONDecodeError:
         return {
