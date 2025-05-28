@@ -24,4 +24,5 @@ async def get_enhanced_prompt(request: EnhanceRequest) -> EnhanceResponse:
         target_model=target_model,
         enhanced_prompt=enhanced_prompt,
         intend=request.intend
+
     )

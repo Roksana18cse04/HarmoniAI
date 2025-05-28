@@ -1,8 +1,6 @@
 from fastapi import APIRouter
 from app.agents.chaining_agent import run_multi_agent_chain
 from app.schemas.input import InputRequest
-
-
 router = APIRouter()
 
 @router.post("/execute-prompt")

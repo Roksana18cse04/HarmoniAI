@@ -21,6 +21,7 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
     ]
     # Add example prompts to help GPT understand intent
     examples = [
+
         {"prompt": "a fantasy castle on a mountain", "intent": "text-to-image"},
         {"prompt": "photo of a cat", "intent": "text-to-image"},
         {"prompt": "sunset over the ocean", "intent": "text-to-image"},
@@ -52,7 +53,6 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
         {"prompt": "Show me popular comedies", "intent": "movie-recommendation"},
         {"prompt": "What's trending on Netflix?", "intent": "movie-recommendation"},
         {"prompt": "Suggest an action film for tonight", "intent": "movie-recommendation"},
-
         {"prompt": "What is the capital of France?", "intent": "question-answering"},
         {"prompt": "Who is the president of the USA?", "intent": "question-answering"},
         {"prompt": "What is the latest news in Bangladesh?", "intent": "question-answering"},
@@ -79,10 +79,6 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
         "\nRespond ONLY in this JSON format:\n"
         "{\n  \"intent\": \"slug\",\n  \"category_id\": number\n}"
     )
-
-
-
-
     # Send prompt to OpenAI
     response = client.chat.completions.create(
         model="gpt-4",
@@ -99,7 +95,7 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
         return result_json
     except json.JSONDecodeError:
         return {
-            "intent": None,
+            "intend": None,
             "category_id": None,
             "error": "Failed to parse LLM response"
         }
