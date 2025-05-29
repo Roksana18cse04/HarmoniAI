@@ -23,4 +23,5 @@ google-search-results
 serpapi
 symspellpy
 trafilatura
+tiktoken
 

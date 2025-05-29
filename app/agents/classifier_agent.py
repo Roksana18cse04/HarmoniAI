@@ -57,7 +57,20 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
         {"prompt": "Who is the president of the USA?", "intent": "question-answering"},
         {"prompt": "What is the latest news in Bangladesh?", "intent": "question-answering"},
         {"prompt": "Tell me something about ChatGPT", "intent": "question-answering"},
-        {"prompt": "What's the weather today in London?", "intent": "question-answering"}
+        {"prompt": "What's the weather today in London?", "intent": "question-answering"},
+
+        {"prompt": "Write a blog post about the benefits of meditation", "intent": "content-create"},
+        {"prompt": "Generate a product description for a new smartphone", "intent": "content-create"},
+        {"prompt": "Create an Instagram post caption and content for a travel brand", "intent": "content-create"},
+        {"prompt": "Write LinkedIn content for a marketing manager announcing a promotion", "intent": "content-create"},
+        {"prompt": "Draft a newsletter for our spring sale campaign", "intent": "content-create"},
+
+        {"prompt": "Create a caption for a dog wearing sunglasses", "intent": "caption-create"},
+        {"prompt": "Write a short and witty caption for a coffee photo", "intent": "caption-create"},
+        {"prompt": "Caption this birthday celebration image", "intent": "caption-create"},
+        {"prompt": "Suggest a funny caption for a cat video", "intent": "caption-create"},
+        {"prompt": "Give me a caption for a fitness transformation post", "intent": "caption-create"}
+
 
 
     ]
