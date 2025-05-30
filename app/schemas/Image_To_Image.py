@@ -16,3 +16,8 @@ class ImageToImageResponse(BaseModel):
     status: Optional[str] = None
     prediction_id: Optional[str] = None
     error_message: Optional[str] = None
+    
+class DressTrialImageRequest(BaseModel):
+    cloth_image_url: str
+    human_image_url: str
+    

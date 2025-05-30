@@ -23,4 +23,4 @@ google-search-results
 serpapi
 symspellpy
 trafilatura
-
+boto3

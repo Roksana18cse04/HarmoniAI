@@ -1,0 +1,55 @@
+{
+  "style_option": [
+    "doom-scroller",
+    "airport-nomad",
+    "main-character-energy",
+    "therapy-warrior",
+    "digital-nomad",
+    "foodie-explorer",
+    "spirit-squad-captain",
+    "plant-parent",
+    "influencer-apprentice",
+    "zoom-meeting-bingo",
+    "burnout-barbie",
+    "parasocial-bestie-ultra",
+    "algorithm-architect",
+    "reality-glitcher",
+    "dopamine-dealer",
+    "authenticity-influencer",
+    "main-character-syndrome-deluxe",
+    "parasocial-bestie-ultra",
+    "ai-companionship",
+    "climate-anxiety-simulator",
+    "situationship-navigator",
+    "phantom-vibration-syndrome",
+    "device-separation-anxiety",
+    "digital-afterlife-manager"
+  ],
+  "custom-image-generation-v2": {
+    "style_option": [
+      "ghibli-anime",
+      "yearbook-portrait",
+      "ukiyo-e",
+      "pop-art",
+      "impressionist",
+      "graffiti",
+      "tattoo-art",
+      "post-apocalyptic",
+      "steampunk",
+      "cyberpunk",
+      "synthwave",
+      "low-poly",
+      "voxel-art",
+      "claymation",
+      "papercraft",
+      "vintage-cartoon",
+      "simpsons",
+      "disney-animation",
+      "chibi-art",
+      "pixar-3d",
+      "funko-pop"
+    ]
+  }
+}
+    
+              

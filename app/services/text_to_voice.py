@@ -1,6 +1,7 @@
 import requests
 import time
 import os
+import random
 from app.schemas.text_to_audio import TextToAudioRequest
 import json
 from openai import OpenAI
@@ -99,14 +100,13 @@ def create_prediction(model_name, user_prompt):
 
     # Retrieve the voice_id from the VOICE_DATABASE
     voice_id = None
-    for voice_category, voices in VOICE_DATABASE.items():
-        if voice_category == voice_type:
-            voice_id = list(voices.values())[0]  # Use the first voice ID in the category
-            break
+    voices_in_category = VOICE_DATABASE.get(voice_type)
 
-    if not voice_id:
+    if voices_in_category:
+        voice_id = random.choice(list(voices_in_category.values()))
+    else:
         print(f"Voice type '{voice_type}' not recognized. Defaulting to 'male'.")
-        voice_id = list(VOICE_DATABASE["male"].values())[0]  # Default to the first male voice ID
+        voice_id = random.choice(list(VOICE_DATABASE["male"].values()))
 
     payload = {
         "model": model_name,
