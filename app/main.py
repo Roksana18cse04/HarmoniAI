@@ -13,6 +13,7 @@ from app.routes.caption_generator_route import router as caption_generator_route
 from app.routes.dress_trail_routes import router as dress_trail_router
 
 from app.services.xml_to_faiss import fetch_and_index_all_products
+from app.routes.style_get_route import router as style_get_router
 import uvicorn
 import os
 
@@ -27,6 +28,7 @@ import os
 
 app = FastAPI(title="Multi-Agent System")
 
+app.include_router(style_get_router,prefix="/model_name_slug",tags =["style_slug"])
 app.include_router(models_selector_router, prefix="/models-selector", tags=["models_selector"])
 app.include_router(enhance_prompt_router, prefix="/enhance-prompt", tags=["enhance-prompt"])
 app.include_router(image_generator_router, prefix="/image-generator", tags=["image-generator"])

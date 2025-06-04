@@ -15,7 +15,7 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 
-def create_prediction_baby_image(man_image_url:str,gender:str,Women_image_url):
+def create_prediction_baby_image(Father_image_url:str,gender:str,mother_image_url):
     response = requests.post(
         "https://api.eachlabs.ai/v1/prediction/",
         headers=HEADERS,
@@ -24,12 +24,12 @@ def create_prediction_baby_image(man_image_url:str,gender:str,Women_image_url):
             "version": "0.0.1",
             "input": {
   "seed": 9999,
-  "image": man_image_url,
+  "image": Father_image_url,
   "steps": 25,
   "width": 512,
   "gender": gender,
   "height": 728,
-  "image2": Women_image_url,
+  "image2": mother_image_url,
 },
         "webhook_url": ""
     }
