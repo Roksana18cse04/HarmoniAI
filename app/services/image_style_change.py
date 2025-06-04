@@ -1,3 +1,6 @@
+from PIL import Image
+import requests
+from io import BytesIO
 import requests
 import os
 import time
@@ -14,19 +17,19 @@ HEADERS = {
     "X-API-Key": API_KEY,
     "Content-Type": "application/json"
 }
-
-
-def create_remove_backgroud(image_url:str):
+# 3d,realistic_style,angel,anime_style,japanese_comics,princess_style,dreamy,ink_style,new_monet_garden,monets_garden,exquisite_comic,cyber_machinery,chinese_style,romantic,ugly_clay,cute_doll,3d_gaming,animated_movie,doll",
+def create_style_prediction(image_url:str,style:str):
     response = requests.post(
-        "https://api.eachlabs.ai/v1/prediction/",
-        headers=HEADERS,
-        json={
-            "model": "eachlabs-bg-remover-v1",
-            "version": "0.0.1",
-            "input": {
-  "image_url": image_url
-},
-            "webhook_url": ""
+    "https://api.eachlabs.ai/v1/prediction/",
+    headers=HEADERS,
+    json={
+        "model": "bytedance",
+        "version": "0.0.1",
+        "input": {
+    "style": style,
+    "image_url": image_url
+    },
+           "webhook_url": ""
         }
     )
     prediction = response.json()
@@ -36,14 +39,12 @@ def create_remove_backgroud(image_url:str):
     
     return prediction["predictionID"]
 
- 
-
-        
-def background_remove(image_url:str):
+def style_change(style_slug: str, image_url: str):
     try:
-        prediction_id = create_remove_backgroud(image_url)
         # Create prediction
+        prediction_id = create_style_prediction(style_slug, image_url)
         print(f"Prediction created: {prediction_id}")
+        
         # Get result
         result = get_prediction(prediction_id)
         print(f"Output URL: {result['output']}")
@@ -51,8 +52,9 @@ def background_remove(image_url:str):
         return result['output']
     except Exception as e:
         print(f"Error: {e}")
-        
-if __name__ == "__main__":
-    image_url = "https://storage.googleapis.com/1019uploads/7b7a24ba-6c15-4081-8106-0d9430e7cde9.png"
-    background_remove(image_url)
+
+# if __name__ == "__main__":
+#     image_url = "https://cdn.pixabay.com/photo/2025/05/19/13/34/girl-9609522_640.jpg"
+#     style = "chinese_style"
+#     style_change(image_url,style)
     

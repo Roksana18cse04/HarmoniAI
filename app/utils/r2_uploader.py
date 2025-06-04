@@ -7,8 +7,13 @@ ACCESS_KEY = '6be3de2c9f2d977313fc016e5161810c'
 SECRET_KEY = '7ca8ec9a3bd94048d73050b6f4550cb924caa58a1629cb734290ab3055d00436'
 ACCOUNT_ID = '0565d09d8a391bdf530fbe0f81c1233f'
 BUCKET_NAME = 'harmonimgbucket'
+# Endpoint used by boto3 (for uploading)
 ENDPOINT_URL = f'https://{ACCOUNT_ID}.r2.cloudflarestorage.com'
 
+# Public URL format (for returning to user)
+
+# Public URL base (used for returning to frontend)
+PUBLIC_BASE_URL = f'https://{BUCKET_NAME}.r2.cloudflarestorage.com'
 
 def upload_to_r2(file_bytes: bytes, object_key: str) -> str:
     session = boto3.session.Session()
@@ -21,4 +26,5 @@ def upload_to_r2(file_bytes: bytes, object_key: str) -> str:
     )
 
     s3.put_object(Bucket=BUCKET_NAME, Key=object_key, Body=file_bytes)
-    return f"{ENDPOINT_URL}/{BUCKET_NAME}/{object_key}"
+
+    return f"{PUBLIC_BASE_URL}/{object_key}"
