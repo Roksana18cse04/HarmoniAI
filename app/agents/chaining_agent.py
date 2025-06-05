@@ -62,19 +62,13 @@ def run_multi_agent_chain(prompt, file:Optional[UploadFile] = None):
             "intent": "question-answering"
         }
     elif model_category['intent']=="caption-create":
-        if file is None:
-                return {
-                    "error": "File is required for caption generation",
-                    "intent": "caption-create"
-                }
-            
-            # Additional file validation
-        if not hasattr(file, 'filename') or not file.filename:
-            return {
-                "error": "Invalid file provided for caption generation",
-                "intent": "caption-create"
-            }
-        caption_text= caption_generator(file, prompt)
+        # Use the file if provided and valid, otherwise pass None
+        if file is not None and (not hasattr(file, 'filename') or not file.filename):
+            file = None
+
+        # Run caption generation (prompt-only or image+prompt)
+        caption_text = caption_generator(file, prompt)
+        
         return caption_text
   
     else:

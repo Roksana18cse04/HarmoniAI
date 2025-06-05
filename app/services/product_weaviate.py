@@ -1,0 +1,155 @@
+import numpy as np
+from app.services.parse_xmlProduct import get_products_from_xml
+from app.services.weaviate_client import client
+from openai import OpenAI
+from dotenv import load_dotenv
+import os
+
+
+# === Load API Keys ===
+load_dotenv()
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+# === Init OpenAI Client ===
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+
+# === Config ===
+BATCH_SIZE = 100
+
+# === Batch Embedding Function ===
+def embed_products_in_batches(products):
+    print("Start batch embedding...")
+
+    vectors = []
+    metadata = []
+
+    total_batches = (len(products) + BATCH_SIZE - 1) // BATCH_SIZE
+
+    for batch_num in range(total_batches):
+        start = batch_num * BATCH_SIZE
+        end = start + BATCH_SIZE
+        batch = products[start:end]
+
+        texts = [f"{p['title']} {p['color']} {p['gender']} {p['price']} {p['link']} {p['image_link']}" for p in batch]
+
+        try:
+            response = openai_client.embeddings.create(
+                model="text-embedding-3-small",
+                input=texts
+            )
+            embeddings = [np.array(e.embedding, dtype=np.float32) for e in response.data]
+        except Exception as e:
+            print(f"Embedding failed for batch {batch_num + 1}: {e}")
+            continue
+
+        vectors.extend(embeddings)
+        metadata.extend(batch)
+        print(f"Embedded batch {batch_num + 1} of {total_batches}")
+
+    print(f"Total vectors created: {len(vectors)}")
+    return vectors, metadata
+
+def upsert_products_to_weaviate(products):
+    print("Upserting to Weaviate...")
+
+    vectors, metadata = embed_products_in_batches(products)
+    client.batch.configure(batch_size=100)  # configure batch size once
+
+    for i, (product, vector) in enumerate(zip(metadata, vectors), 1):
+        data_object = {
+            "title": product["title"],
+            "color": product["color"],
+            "gender": product["gender"],
+            "price": product["price"],
+            "link": product["link"],
+            "image_link": product["image_link"],
+        }
+        try:
+            client.batch.add_data_object(
+                data_object=data_object,
+                class_name="Product",
+                vector=vector.tolist() if hasattr(vector, "tolist") else vector
+            )
+            print(f"Added to batch vector {i} - {data_object}")
+        except Exception as e:
+            print(f"Failed to add object {i} to batch: {e}")
+    try:
+        client.batch.flush()
+    except Exception as e:
+        print(f"Batch flush failed: {e}")
+
+    print(f"Upserted {len(vectors)} products to Weaviate.")
+
+
+# === Single Text Embedding ===
+def embed_text(text):
+    try:
+        response = openai_client.embeddings.create(
+            model="text-embedding-3-small",
+            input=[text]
+        )
+        return np.array(response.data[0].embedding, dtype=np.float32)
+    except Exception as e:
+        print(f"Failed to embed query text: {e}")
+        return None
+
+# === Query Weaviate ===
+def query_weaviate_products(user_prompt, top_k=10):
+    query_vector = embed_text(user_prompt)
+    if query_vector is None:
+        print("Embedding failed for prompt:", user_prompt)
+        return []
+
+    try:
+        result = client.query.get("Product", ["title", "color", "gender", "price", "link", "image_link"]) \
+            .with_near_vector({"vector": query_vector.tolist()}) \
+            .with_limit(top_k) \
+            .do()
+        
+        products = result.get("data", {}).get("Get", {}).get("Product", [])
+        if not products:
+            print("No results found for:", user_prompt)
+
+        print("Fetching total products...")
+        response = client.query.get("Product", ["title"]).with_limit(1).do()
+        print(response)
+
+        return products
+
+    except Exception as e:
+        print("Query error:", e)
+        return []
+
+import json
+def deduplicate_products(products):
+    seen = set()
+    unique = []
+    for p in products:
+        key = json.dumps(p, sort_keys=True)
+        if key not in seen:
+            seen.add(key)
+            unique.append(p)
+    return unique
+
+# === Fetch and Index All Products ===
+def fetch_and_index_all_products():
+    urls = [
+        "https://www.kappa-tr.com/feed/standartV3",
+        # "https://tr.ecco.com/feed/googleV2",
+        # "https://www.suvari.com.tr/feed/googleV2",
+        # "https://www.alvinaonline.com/tr/p/XMLProduct/GoogleMerchantXML",
+        # "https://www.perspective.com.tr/feed/facebook",
+    ]
+
+    all_products = []
+    for url in urls:
+        try:
+            products = get_products_from_xml(url)
+            all_products.extend(products)
+            print(f"Fetched {len(products)} from {url}")
+        except Exception as e:
+            print(f"Failed to fetch from {url}: {e}")
+
+    print(f"Total fetched products: {len(all_products)}")
+    products = deduplicate_products(all_products)
+    upsert_products_to_weaviate(products)

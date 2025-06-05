@@ -24,4 +24,5 @@ serpapi
 symspellpy
 trafilatura
 tiktoken
-
+weaviate-client==4.14.0
+ijson
