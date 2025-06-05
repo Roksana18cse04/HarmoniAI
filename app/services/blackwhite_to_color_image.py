@@ -42,14 +42,13 @@ def drw_image_color_create_prediction(image_url: str, prompt: str):
 def draw_image_color(image_url: str, prompt: str):
     try:
         prediction_id = drw_image_color_create_prediction(image_url, prompt)
+       # Get result
         result = get_prediction(prediction_id)
-        
-        if result["status"] == "success":
-            return result["output"]["image"]
-        else:
-            raise Exception(f"Prediction failed: {result}")
+        # print(f"Output URL: {result['output']}")
+        # print(f"Processing time: {result['metrics']['predict_time']}s")
+        return result['output']
     except Exception as e:
-        raise Exception(f"An error occurred while processing the image: {str(e)}") from e
+        print(f"Error: {e}")
 
 # example usage
 if __name__ == "__main__":

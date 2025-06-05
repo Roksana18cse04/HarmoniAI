@@ -1,21 +1,29 @@
 # app/utils/r2_uploader.py
+
 import boto3
 from botocore.client import Config
+from dotenv import load_dotenv
+import os
 
-# R2 credentials
-ACCESS_KEY = '6be3de2c9f2d977313fc016e5161810c'
-SECRET_KEY = '7ca8ec9a3bd94048d73050b6f4550cb924caa58a1629cb734290ab3055d00436'
-ACCOUNT_ID = '0565d09d8a391bdf530fbe0f81c1233f'
-BUCKET_NAME = 'harmonimgbucket'
-# Endpoint used by boto3 (for uploading)
-ENDPOINT_URL = f'https://{ACCOUNT_ID}.r2.cloudflarestorage.com'
+# Load environment variables from .env file
+load_dotenv()
 
-# Public URL format (for returning to user)
-
-# Public URL base (used for returning to frontend)
-PUBLIC_BASE_URL = f'https://{BUCKET_NAME}.r2.cloudflarestorage.com'
+# Secure configuration via environment variables
+ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL")
+ACCESS_KEY = os.getenv("R2_ACCESS_KEY")
+SECRET_KEY = os.getenv("R2_SECRET_KEY")
+REGION = os.getenv("R2_REGION", "auto")
+BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
+PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")  # e.g., https://cdn.harmoniai.net
 
 def upload_to_r2(file_bytes: bytes, object_key: str) -> str:
+    """
+    Uploads a file to R2 and returns the public URL.
+
+    :param file_bytes: File content in bytes
+    :param object_key: Path/key in the bucket (e.g., 'images/output.png')
+    :return: Public URL of the uploaded file
+    """
     session = boto3.session.Session()
     s3 = session.client(
         service_name='s3',
@@ -28,3 +36,10 @@ def upload_to_r2(file_bytes: bytes, object_key: str) -> str:
     s3.put_object(Bucket=BUCKET_NAME, Key=object_key, Body=file_bytes)
 
     return f"{PUBLIC_BASE_URL}/{object_key}"
+
+# # Local test block
+# if __name__ == "__main__":
+#     test_data = b"Hello, world!"
+#     test_key = "test/test.txt"
+#     public_url = upload_to_r2(test_data, test_key)
+#     print("Uploaded to:", public_url)

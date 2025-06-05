@@ -50,9 +50,9 @@ def dress_trial(image_request: DressTrialImageRequest):
 
         # Get result
         result = get_prediction(prediction_id)
-        print(f"Output URL: {result['output']}")
-        print(f"Processing time: {result['metrics']['predict_time']}s")
-        return result
+        # print(f"Output URL: {result['output']}")
+        # print(f"Processing time: {result['metrics']['predict_time']}s")
+        return result["output"]
     except Exception as e:
         print(f"Error: {e}")
         

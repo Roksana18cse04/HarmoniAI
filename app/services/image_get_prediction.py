@@ -16,39 +16,20 @@ HEADERS = {
 def get_prediction(prediction_id: str) -> str:
     try:
         while True:
-            response = requests.get(
+    
+            result = requests.get(
                 f"https://api.eachlabs.ai/v1/prediction/{prediction_id}",
                 headers=HEADERS
-            )
-            response.raise_for_status()
-            result = response.json()
-
-            print("Response:", result)  # Debugging
-
-            if isinstance(result, dict) and result.get("status") == "success":
-                if "output" in result:
-                    # Handle both cases: output as list or direct URL
-                    if isinstance(result["output"], list) and len(result["output"]) > 0:
-                        image_url = result["output"][0]  # Get first URL from list
-                    elif isinstance(result["output"], str):
-                        image_url = result["output"]  # Direct URL string
-                    else:
-                        print("Error: 'output' format not recognized.")
-                        return None
-
-                    print(f"Image generation successful: {image_url}")
-                    return image_url
-                else:
-                    print("Error: 'output' key missing in response.")
-                    return None
-            elif result.get("status") in ["error", "cancelled"]:
-                print(f"Error: {result.get('message', 'Generation failed')}")
-                return None
-
+            ).json()
+            
+            if result["status"] == "success":
+                return result
+            elif result["status"] == "error":
+                raise Exception(f"Prediction failed: {result}")
             print("Processing...")
             time.sleep(3)
     except requests.exceptions.RequestException as e:
         print(f"Error polling prediction: {e}")
-        return None
+        return e
     
     
