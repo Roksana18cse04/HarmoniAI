@@ -10,7 +10,7 @@ from app.routes.content_generator_route import router as content_creator_router
 from app.routes.caption_generator_route import router as caption_generator_router
 from app.routes.merge_video_audio_routs import router as merge_video_audio_router
 from app.routes.caption_generator_route import router as caption_generator_router
-from app.routes.dress_trail_routes import router as dress_trail_router
+from app.routes.image_process import router as image_to_image_process
 
 from app.services.xml_to_faiss import fetch_and_index_all_products
 from app.routes.style_get_route import router as style_get_router
@@ -35,7 +35,7 @@ app.include_router(image_generator_router, prefix="/image-generator", tags=["ima
 app.include_router(audio_video_router, prefix="/video-generate", tags=["video-generate"])
 app.include_router(content_creator_router, prefix="/content-creator", tags=["content-create"])
 app.include_router(caption_generator_router,prefix="/caption-generator", tags=["/caption-generate"])
-app.include_router(dress_trail_router, prefix="/dress-trial", tags=["dress-trial"])
+app.include_router(image_to_image_process,prefix="/image-process")
 
 @app.get("/manual-refresh-product-embedding")
 async def manual_refresh():

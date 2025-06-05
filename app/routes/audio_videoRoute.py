@@ -1,36 +1,36 @@
 from fastapi import APIRouter, UploadFile, File
-import os
-import cloudinary
-import cloudinary.uploader
+from app.utils.r2_uploader import upload_to_r2
 from app.agents.audio_video import generate_video_with_audio
 from app.schemas.video_with_audio import VideoWithAudioRequest
 
-
 router = APIRouter()
-@router.post("/video-generate")
-async def video_generate(image_file: UploadFile = File(...),audio_file: UploadFile = File(...)):
-    """
-    Uploads an image and audio file to Cloudinary and returns their URLs.
-    """
 
-    
-    # Upload to Cloudinary
+@router.post("/video-generate")
+async def video_generate(
+    image_file: UploadFile = File(...),
+    audio_file: UploadFile = File(...)
+):
+    # Read file bytes
     image_bytes = await image_file.read()
     audio_bytes = await audio_file.read()
-    image_upload = cloudinary.uploader.upload(image_bytes, resource_type="image")
-    audio_upload = cloudinary.uploader.upload(audio_bytes, resource_type="auto")
-    image_url = image_upload.get("secure_url")
-    audio_url = audio_upload.get("secure_url")
-    print(f"Uploaded image to Cloudinary: {image_url}")
-    print(f"Uploaded audio to Cloudinary: {audio_url}")
-    
+
+    # Define object keys (paths in bucket)
+    image_key = f"images/{image_file.filename}"
+    audio_key = f"audio/{audio_file.filename}"
+
+    # Upload to R2 using your function
+    image_url = upload_to_r2(image_bytes, image_key)
+    audio_url = upload_to_r2(audio_bytes, audio_key)
+
+    if not image_url or not audio_url:
+        return {"error": "Upload failed"}
+
+    # Use uploaded URLs to generate video
     request_data = VideoWithAudioRequest(image_url=image_url, audio_url=audio_url)
     video_url = generate_video_with_audio(data=request_data)
-    print(f"Generated video URL: {video_url}")
-    
+
     return {
         "image_url": image_url,
         "audio_url": audio_url,
         "video_url": video_url
     }
-
