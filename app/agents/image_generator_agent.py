@@ -3,7 +3,7 @@ import os
 from app.schemas.TextToImage import TextToImageRequest
 from dotenv import load_dotenv
 from app.services.textToImage_create_prediction import create_prediction
-from app.services.image_get_prediction import get_prediction
+from app.services._get_prediction import get_prediction
 # Load environment variables
 load_dotenv(override=True)
 
