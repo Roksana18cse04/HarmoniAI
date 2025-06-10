@@ -46,7 +46,8 @@ if __name__ == "__main__":
     # Example input
     image_request = TextToImageRequest(
         model_name="flux-dev-realism",
-        prompt="A dog wearing a hat, in a cartoon style, colorful and fun"
+        prompt="A dog wearing a hat, in a cartoon style, colorful and fun",
+        intend = "str"
     )
 
     # Generate image and get result

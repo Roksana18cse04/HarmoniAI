@@ -17,11 +17,17 @@ def create_prediction(prompt: str, model_name: str, duration: int):
             "model": model_name,
             "version": "0.0.1",
             "input": {
-  "duration": duration,
-  "mode": "PRO",
-  "model_name": model_name,
-  "prompt": prompt,
-}
+                "prompt": prompt,
+                "cfg_scale" : 0.5,
+                "prompt_optimizer": False,
+                "negative_prompt": "blur, distort, and low quality",
+                "aspect_ratio": "16:9",
+                "seed": 9999,
+                "quality": "540p",
+                "duration": duration,
+                "motion_mode": "normal",
+                "model_name": model_name,
+            }
     }
  
     response = requests.post(url, headers=HEADERS, json= payload)
@@ -69,7 +75,14 @@ if __name__ == "__main__":
 
     try:
         # Generate video and get the result
-        video_url = generate_video(prompt, model_name, duration)
+        from app.schemas.TextToVedio import TextToVideoRequest
+        
+        data = TextToVideoRequest(
+            prompt=prompt,
+            model_name=model_name,
+            duration=duration
+        )
+        video_url = generate_video(data)
         if video_url:
             print(f"Generated video URL: {video_url}")
         else:
