@@ -4,6 +4,8 @@ from app.services.weaviate_client import client
 from openai import OpenAI
 from dotenv import load_dotenv
 import os
+import weaviate.classes as wvc
+from weaviate.classes.query import MetadataQuery
 
 
 # === Load API Keys ===
@@ -50,36 +52,46 @@ def embed_products_in_batches(products):
     return vectors, metadata
 
 def upsert_products_to_weaviate(products):
+    products=products[:500]
     print("Upserting to Weaviate...")
 
     vectors, metadata = embed_products_in_batches(products)
-    client.batch.configure(batch_size=100)  # configure batch size once
+    
+    # Get the Product collection
+    if not client.is_connected():
+        client.connect()
+    product_collection = client.collections.get("Product")
+    
+    # Prepare data objects for batch insert
+    data_objects = []
+    for product, vector in zip(metadata, vectors):
+        data_object = wvc.data.DataObject(
+            properties={
+                "title": product["title"],
+                "color": product["color"],
+                "gender": product["gender"],
+                "price": product["price"],
+                "link": product["link"],
+                "image_link": product["image_link"],
+            },
+            vector=vector.tolist() if hasattr(vector, "tolist") else vector
+        )
+        data_objects.append(data_object)
 
-    for i, (product, vector) in enumerate(zip(metadata, vectors), 1):
-        data_object = {
-            "title": product["title"],
-            "color": product["color"],
-            "gender": product["gender"],
-            "price": product["price"],
-            "link": product["link"],
-            "image_link": product["image_link"],
-        }
-        try:
-            client.batch.add_data_object(
-                data_object=data_object,
-                class_name="Product",
-                vector=vector.tolist() if hasattr(vector, "tolist") else vector
-            )
-            print(f"Added to batch vector {i} - {data_object}")
-        except Exception as e:
-            print(f"Failed to add object {i} to batch: {e}")
     try:
-        client.batch.flush()
+        # Batch insert with error handling
+        response = product_collection.data.insert_many(data_objects)
+        
+        # Check for errors
+        if response.has_errors:
+            print(f"Batch insert completed with {len(response.errors)} errors:")
+            for error in response.errors:
+                print(f"Error: {error}")
+        else:
+            print(f"Successfully upserted {len(data_objects)} products to Weaviate.")
+            
     except Exception as e:
-        print(f"Batch flush failed: {e}")
-
-    print(f"Upserted {len(vectors)} products to Weaviate.")
-
+        print(f"Batch insert failed: {e}")
 
 # === Single Text Embedding ===
 def embed_text(text):
@@ -101,18 +113,41 @@ def query_weaviate_products(user_prompt, top_k=10):
         return []
 
     try:
-        result = client.query.get("Product", ["title", "color", "gender", "price", "link", "image_link"]) \
-            .with_near_vector({"vector": query_vector.tolist()}) \
-            .with_limit(top_k) \
-            .do()
+        # Get the Product collection
+        if not client.is_connected():
+            client.connect()
+        product_collection = client.collections.get("Product")
         
-        products = result.get("data", {}).get("Get", {}).get("Product", [])
+        # Perform vector search
+        response = product_collection.query.near_vector(
+            near_vector=query_vector.tolist(),
+            limit=top_k,
+            return_metadata=MetadataQuery(distance=True)
+        )
+        
+        # Extract products from response
+        products = []
+        for item in response.objects:
+            product = {
+                "title": item.properties.get("title"),
+                "color": item.properties.get("color"),
+                "gender": item.properties.get("gender"),
+                "price": item.properties.get("price"),
+                "link": item.properties.get("link"),
+                "image_link": item.properties.get("image_link"),
+                "distance": item.metadata.distance if item.metadata else None
+            }
+            products.append(product)
+        
         if not products:
             print("No results found for:", user_prompt)
 
+        # Check total count of products
         print("Fetching total products...")
-        response = client.query.get("Product", ["title"]).with_limit(1).do()
-        print(response)
+        aggregate_response = product_collection.aggregate.over_all(
+            total_count=True
+        )
+        print(f"Total products in collection: {aggregate_response.total_count}")
 
         return products
 
@@ -132,7 +167,7 @@ def deduplicate_products(products):
     return unique
 
 # === Fetch and Index All Products ===
-def fetch_and_index_all_products():
+def fetch_and_index_all_products():  
     urls = [
         "https://www.kappa-tr.com/feed/standartV3",
         # "https://tr.ecco.com/feed/googleV2",

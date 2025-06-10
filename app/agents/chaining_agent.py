@@ -2,6 +2,7 @@ from app.services.fetch_models_info import fetch_models_info
 from app.agents.classifier_agent import classify_prompt_agent
 from app.agents.image_caption_agent import caption_generator
 from app.agents.shopping_agent import shopping_agent  
+from app.agents.media_agent import media_agent
 from app.agents.qa_agent import question_answer_agent 
 from app.services.correct_symspell import correct_spelling
 from typing import Optional
@@ -54,6 +55,9 @@ def run_multi_agent_chain(prompt, file:Optional[UploadFile] = None):
         # if the category is shopping, use the shopping agent to get product info
         shopping_result = shopping_agent(prompt)
         return shopping_result
+    elif model_category["intent"]=="media-recommendation":
+        response = media_agent(prompt) 
+        return response       
     elif model_category["intent"]=="question-answering":
         response= question_answer_agent(prompt)
         print("result------", response)
@@ -74,4 +78,9 @@ def run_multi_agent_chain(prompt, file:Optional[UploadFile] = None):
     else:
         # fetch models based on the classified category
         models= fetch_models(prompt, models_info, model_category)
+        if not models:
+            return {
+                "models": [],
+                "message": "Currently, model is not available"
+            }
         return models

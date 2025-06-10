@@ -5,10 +5,13 @@ import logging
 from app.services.weaviate_client import client
 from app.services.helper import safe_float
 from pathlib import Path
-from typing import Dict
+from typing import Dict, List
 from dotenv import load_dotenv
 from openai import OpenAI
 import asyncio
+from weaviate.classes.data import DataObject
+from weaviate.classes.query import MetadataQuery
+
 # # === Load ENV & API Key ===
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -19,7 +22,8 @@ logger = logging.getLogger(__name__)
 
 # === Init Clients ===
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
-weaviate_client= client
+weaviate_client = client
+
 # === Config ===
 BATCH_SIZE = 100
 
@@ -43,7 +47,7 @@ def process_content_for_weaviate(content: Dict, category_map: Dict) -> Dict:
 
         "genre_list": (
             [g.get("title", "").lower() for g in content.get("details", {}).get("genres", [])]
-            if category_title in ['Kitap', 'Müzik'] else
+            if category_title in ['Kitab', 'Müzik'] else
             [g.get("title", "").lower() for g in content.get("details", {}).get("genres", {}).get("value", [])]
             if category_title in ['Film', 'Dizi'] else
             []
@@ -57,30 +61,32 @@ def process_content_for_weaviate(content: Dict, category_map: Dict) -> Dict:
         ),
 
         "description": content.get("description", ""),
-        "image": content.get("image"),
+        "image": content.get("image", ""),
         "creator": (
             next((a.get("name", "") for a in content.get("author", []) if isinstance(a, dict)), "")
-            if category_title == 'Kitap' else
+            if category_title == 'Kitab' else
             next((d.get("name", "") for d in content.get("directors", []) if isinstance(d, dict)), "")
             if category_title in ['Film', 'Dizi'] else
-            content.get("details", {}).get("artists", [])
+            ", ".join(content.get("details", {}).get("artists", []))
+            if category_title == 'Müzik' and isinstance(content.get("details", {}).get("artists"), list) else
+            str(content.get("details", {}).get("artists", ""))
             if category_title == 'Müzik' else
             ""
         ),
 
         "releaseYear": (
             int(content.get("publish_year"))
-            if category_title == 'Kitap' and content.get("publish_year") else
+            if category_title == 'Kitab' and content.get("publish_year") and str(content.get("publish_year")).isdigit() else
             int(str(content.get("publish_time", ""))[:4])
-            if category_title in ['Film', 'Dizi'] and content.get("publish_time") else
+            if category_title in ['Film', 'Dizi'] and content.get("publish_time") and str(content.get("publish_time", ""))[:4].isdigit() else
             int(content.get("release_year"))
-            if category_title == 'Müzik' and content.get("release_year") else
+            if category_title == 'Müzik' and content.get("release_year") and str(content.get("release_year")).isdigit() else
             None
         ),
 
         "tags": (
             [g.get("title") for g in content.get("details", {}).get("genres", [])]
-            if category_title in ['Kitap', 'Müzik'] else
+            if category_title in ['Kitab', 'Müzik'] else
             [g.get("title") for g in content.get("details", {}).get("genres", {}).get("value", [])]
             if category_title in ['Film', 'Dizi'] else
             []
@@ -88,15 +94,16 @@ def process_content_for_weaviate(content: Dict, category_map: Dict) -> Dict:
 
         "rating": (
             safe_float(content.get("rating", {}).get("value")) or
-            safe_float(content.get("book_rating"))
+            safe_float(content.get("book_rating")) or
+            0.0
         ),
 
         "duration": (
-            content.get("details", {}).get("duration_time", {}).get("value", "")
-            if category_title in ['Film', 'Dizi'] else
-            content.get("duration", "")
-            if category_title == 'Müzik' else
-            None
+            str(content.get("details", {}).get("duration_time", {}).get("value", ""))
+            if category_title in ['Film', 'Dizi'] and content.get("details", {}).get("duration_time", {}).get("value") else
+            str(content.get("duration", ""))
+            if category_title == 'Müzik' and content.get("duration") else
+            ""
         ),
 
         "link": link,
@@ -109,14 +116,13 @@ def process_content_for_weaviate(content: Dict, category_map: Dict) -> Dict:
 
         "publisher": (
             content.get("details", {}).get("publisher", "")
-            if category_title == 'Kitap' else
+            if category_title == 'Kitab' else
             ""
         )
     }
 
     # Remove fields with None, empty string, or empty list values
-    # return {k: v for k, v in processed.items() if v not in [None, "", []]}
-    return processed
+    return {k: v for k, v in processed.items() if v not in [None, "", []]}
 
 def generate_content_embeddings(items: list[dict]) -> list[tuple[dict, list[float]]]:
     """
@@ -153,48 +159,76 @@ def generate_content_embeddings(items: list[dict]) -> list[tuple[dict, list[floa
         logger.error(f"Embedding generation failed: {e}")
         return []
 
-
-
 # === Load Data and Import to Weaviate ===
 def import_content_to_weaviate(data, category_map):
-    for i in range(0, len(data), BATCH_SIZE):
-        chunk = data[i:i + BATCH_SIZE]
-
-        # Preprocess all items in the chunk
-        processed_items = []
-        for item in chunk:
-            processed_item = process_content_for_weaviate(item, category_map)
-            if not processed_item.get("title"):
-                continue
-            processed_items.append(processed_item)
-
-        # Generate embeddings for all processed items in the chunk
-        vectors = generate_content_embeddings(processed_items)
-        if not vectors:
-            logger.error("Failed to generate embeddings for the batch, skipping this chunk")
-            continue
-
-        # Add each item with its embedding vector to the batch
-        for processed_item, vector in zip(processed_items, vectors):
-            try:
-                weaviate_client.batch.add_data_object(
-                    data_object=processed_item,
-                    class_name="ContentItem",
-                    vector=vector
-                )
-                logger.info(f"Imported: {processed_item['title']}")
-            except Exception as e:
-                logger.error(f"Failed to import: {e}")
-
-    # Flush any remaining objects in the batch
+    data=data[:500]
     try:
-        weaviate_client.batch.flush()
+        # Get the collection
+        if not weaviate_client.is_connected():
+            weaviate_client.connect()
+        content_collection = weaviate_client.collections.get("ContentItem")
+        
+        for i in range(0, len(data), BATCH_SIZE):
+            chunk = data[i:i + BATCH_SIZE]
+
+            # Preprocess all items in the chunk
+            processed_items = []
+            for item in chunk:
+                processed_item = process_content_for_weaviate(item, category_map)
+                if not processed_item.get("title"):
+                    continue
+                processed_items.append(processed_item)
+
+            # Generate embeddings for all processed items in the chunk
+            item_vector_pairs = generate_content_embeddings(processed_items)
+            if not item_vector_pairs:
+                logger.error("Failed to generate embeddings for the batch, skipping this chunk")
+                continue
+
+            # Prepare data objects for batch insert
+            data_objects = []
+            for processed_item, vector in item_vector_pairs:
+                data_objects.append(
+                    DataObject(
+                        properties=processed_item,
+                        vector=vector
+                    )
+                )
+
+            # Insert all objects at once using batch_insert
+            try:
+                response = content_collection.data.insert_many(data_objects)
+                
+                # Check for any errors
+                if response.has_errors:
+                    for error in response.errors:
+                        logger.error(f"Failed to import: {error}")
+                else:
+                    logger.info(f"Successfully imported {len(data_objects)} items in batch {i//BATCH_SIZE + 1}")
+                    
+            except Exception as e:
+                logger.error(f"Batch import failed for chunk {i//BATCH_SIZE + 1}: {e}")
+                
+                # Fallback to individual inserts
+                logger.info("Attempting individual inserts for this chunk...")
+                successful_imports = 0
+                for processed_item, vector in item_vector_pairs:
+                    try:
+                        uuid = content_collection.data.insert(
+                            properties=processed_item,
+                            vector=vector
+                        )
+                        logger.info(f"Imported: {processed_item.get('title', 'Unknown')} with UUID: {uuid}")
+                        successful_imports += 1
+                    except Exception as individual_error:
+                        logger.error(f"Failed to import {processed_item.get('title', 'Unknown')}: {individual_error}")
+                
+                logger.info(f"Successfully imported {successful_imports} out of {len(item_vector_pairs)} items individually")
+
     except Exception as e:
-        logger.warning(f"Flush failed: {e}")
+        logger.error(f"Import process failed: {e}")
 
     logger.info("Import completed.")
-
-
 
 # === Embed text ===
 def embed_text(text: str):
@@ -216,18 +250,18 @@ def query_weaviate_media(user_prompt: str, top_k: int = 10):
         return []
 
     try:
-        result = weaviate_client.query.get(
-            "ContentItem",
-            [
-                "title", "category", "genre_list", "language", "description",
-                "image", "creator", "releaseYear", "tags", "rating",
-                "duration", "link", "actors", "publisher"  # fixed 'actors'
-            ]
-        ).with_near_vector({
-            "vector": query_vector  # removed .tolist()
-        }).with_limit(top_k).do()
-
-        return result.get("data", {}).get("Get", {}).get("ContentItem", [])
+        # Updated query for Weaviate v4
+        if not weaviate_client.is_connected():
+            weaviate_client.connect()
+        content_collection = weaviate_client.collections.get("ContentItem")
+        
+        response = content_collection.query.near_vector(
+            near_vector=query_vector,
+            limit=top_k,
+            return_metadata=MetadataQuery(distance=True)
+        )
+        
+        return [obj.properties for obj in response.objects]
 
     except Exception as e:
         print("Query error:", e)
@@ -236,8 +270,9 @@ def query_weaviate_media(user_prompt: str, top_k: int = 10):
 def fetch_all_media(): 
     try:
         base_dir = Path(config.BASE_DIR).parent
-        content_path=os.path.join(base_dir, "Remzi", "omuz.n_contents.json")
-        categories_path=os.path.join(base_dir, "Remzi", "omuz.n_categories.json")
+        content_path = os.path.join(base_dir, "Remzi", "omuz.n_contents.json")
+        categories_path = os.path.join(base_dir, "Remzi", "omuz.n_categories.json")
+        
         # Load category map
         with open(categories_path, 'r', encoding='utf-8') as f:
             categories_data = json.load(f)
@@ -252,8 +287,10 @@ def fetch_all_media():
 
         logger.info(f"Loaded {len(data)} content items.")
         import_content_to_weaviate(data, category_map)
+    except Exception as e:
+        logger.error(f"Failed to fetch and import media: {e}")
     finally:
-            weaviate_client.close()
+        weaviate_client.close()
     
     
 # # === Entrypoint ===
@@ -261,8 +298,8 @@ def fetch_all_media():
 # if __name__ == "__main__":
 #     from app.config import config
 #     base_dir = Path(config.BASE_DIR).parent
-#     content_path=os.path.join(base_dir, "Remzi", "omuz.n_contents.json")
-#     categories_path=os.path.join(base_dir, "Remzi", "omuz.n_categories.json")
+#     content_path = os.path.join(base_dir, "Remzi", "omuz.n_contents.json")
+#     categories_path = os.path.join(base_dir, "Remzi", "omuz.n_categories.json")
 
 #     async def main():
 #         try:
@@ -278,7 +315,7 @@ def fetch_all_media():
 
 #             # Process first 50 items
 #             for content_item in data[:50]:
-#                 res= process_content_for_weaviate(content_item, category_map)
+#                 res = process_content_for_weaviate(content_item, category_map)
 #                 print(res)
 
 #             # for d in data:
@@ -286,10 +323,8 @@ def fetch_all_media():
 #             #         print(d)
 #             #         break
 
-#             # import_content_to_weaviate(content_path, categories_path)
+#             # import_content_to_weaviate(data, category_map)
 #         finally:
 #             weaviate_client.close()  # ✅ Proper cleanup to avoid warning
 
 #     asyncio.run(main())
-
-
