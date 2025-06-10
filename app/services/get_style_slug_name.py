@@ -13,7 +13,7 @@ def get_style_slugs_by_model(model_name):
        
     }
     return model_styles.get(model_name.lower(), ["unknown-model"])
-# Example usage
-model = "custom-image-generation-v2"
-style_slugs = get_style_slugs_by_model(model)
-print(f"Style slugs for '{model}': {style_slugs}")
+# # Example usage
+# model = "custom-image-generation-v2"
+# style_slugs = get_style_slugs_by_model(model)
+# print(f"Style slugs for '{model}': {style_slugs}")

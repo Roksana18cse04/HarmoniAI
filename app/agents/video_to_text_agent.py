@@ -19,5 +19,5 @@ def video_to_text_generate(video_url:str):
         
 #example 
 
-videourl = "https://youtube.com/clip/UgkxN99U_gg843KkMt8f8-gGT_h5wPuXqkGo?si=7CiORF51d8nkNHrK"
-video_to_text_generate(videourl)
+# videourl = "https://youtube.com/clip/UgkxN99U_gg843KkMt8f8-gGT_h5wPuXqkGo?si=7CiORF51d8nkNHrK"
+# video_to_text_generate(videourl)

@@ -2,7 +2,7 @@ import requests
 import time
 import os
 from dotenv import load_dotenv
-from app.services.image_get_prediction import get_prediction
+from app.services._get_prediction import get_prediction
 
 # Load environment variables
 load_dotenv(override=True)
