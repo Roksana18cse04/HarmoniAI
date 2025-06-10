@@ -43,3 +43,17 @@ def create_prediction():
         raise Exception(f"Prediction failed: {prediction}")
     
     return prediction["predictionID"]
+
+def get_prediction_status(prediction_id):
+    while True:
+        result = requests.get(
+            f"https://api.eachlabs.ai/v1/prediction/{prediction_id}",
+            headers=HEADERS
+        ).json()
+        
+        if result["status"] == "success":
+            return result
+        elif result["status"] == "error":
+            raise Exception(f"Prediction failed: {result}")
+        
+        time.sleep(1)

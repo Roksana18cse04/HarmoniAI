@@ -10,8 +10,12 @@ from app.routes.content_generator_route import router as content_creator_router
 from app.routes.caption_generator_route import router as caption_generator_router
 from app.routes.merge_video_audio_routs import router as merge_video_audio_router
 from app.routes.caption_generator_route import router as caption_generator_router
+from app.routes.image_process import router as image_to_image_process
 
 from app.services.xml_to_faiss import fetch_and_index_all_products
+from app.routes.style_get_route import router as style_get_router
+from app.routes.Audio_generate import router as audio_generate_router
+from app.routes.video_to_text_route import router as video_to_text_router
 import uvicorn
 import os
 
@@ -26,12 +30,17 @@ import os
 
 app = FastAPI(title="Multi-Agent System")
 
+app.include_router(style_get_router,prefix="/model_name_slug",tags =["style_slug"])
 app.include_router(models_selector_router, prefix="/models-selector", tags=["models_selector"])
 app.include_router(enhance_prompt_router, prefix="/enhance-prompt", tags=["enhance-prompt"])
 app.include_router(image_generator_router, prefix="/image-generator", tags=["image-generator"])
 app.include_router(audio_video_router, prefix="/video-generate", tags=["video-generate"])
 app.include_router(content_creator_router, prefix="/content-creator", tags=["content-create"])
 app.include_router(caption_generator_router,prefix="/caption-generator", tags=["/caption-generate"])
+app.include_router(image_to_image_process,prefix="/image-process",tags = ["/image-to-image-process"])
+app.include_router(audio_generate_router,prefix = "/audio-generate",tags = ["/text-to-audio"])
+app.include_router(video_to_text_router,prefix = "/video-to-text",tags = ["/video-to-text"])
+
 
 @app.get("/manual-refresh-product-embedding")
 async def manual_refresh():

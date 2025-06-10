@@ -1,7 +1,7 @@
 import requests
 import time
 import os
-from app.schemas.text_to_audio import TextToAudioRequest
+import random
 import json
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -57,16 +57,67 @@ def analyze_prompt(prompt):
     Returns structured output in JSON format.
     """
     system_message = """
-    Analyze the following user prompt and provide a response in the following format:
+        You are a prompt analyzer for a text-to-speech (TTS) generation system.
 
-    {
-        "audio-prompt": "The extracted portion for audio conversion",
-        "voicetype": "Detected voice type (male/female/child)",
-        "language": "Detected language"
-    }
+        Your job is to extract clean, voice-ready content from a user's and return metadata in a valid JSON format.
 
-    Ensure the response is in valid JSON format.
-    """
+            Your response must follow this structure:
+
+            {
+                "audio-prompt": "<The exact sentence or quoted phrase that should be converted to speech (preferably quoted speech if available), max 2–3 clean sentences.>",
+                "voicetype": "<Detected voice type: male | female | child. Default to 'female' if not specified.>",
+                "language": "<Detected language (e.g., english, spanish). Default to 'english' if unclear.>"
+            }
+
+            Rules:
+            - ✅ If the user prompt contains quoted text (like “...”, "..." or ‘...’), extract ONLY the quoted part for `audio-prompt`.
+            - ✅ If there is no quoted text, extract up to 2–3 clean, complete sentences suitable for TTS.
+            - ❌ Do not include instructions, metadata, or context text.
+            - 🎯 Only include voice-appropriate, speakable content.
+            - 🔁 Always return valid JSON. Do not include commentary or explanations outside the JSON.
+
+            Examples:
+
+            Input:
+            a man says "who are you when you come"
+
+            Output:
+            {
+                "audio-prompt": "who are you when you come",
+                "voicetype": "male",
+                "language": "english"
+            }
+
+            Input:
+            Generate a girl’s voice to say something like: “Hello, and welcome to our Python basics class.”
+
+            Output:
+            {
+                "audio-prompt": "Hello, and welcome to our Python basics class.",
+                "voicetype": "female",
+                "language": "english"
+            }
+
+            Input:
+            Create an excited child voice saying something fun.
+
+            Output:
+            {
+                "audio-prompt": "Let's go on an adventure! It's going to be so much fun!",
+                "voicetype": "child",
+                "language": "english"
+            }
+            Input : 
+            a man says who are you when you come and then he says I am a
+            Output :
+            {
+                "audio-prompt": "who are you when you come and then he says I am a
+                ",
+                "voicetype": "male",
+                "language": "english"
+            }
+        """
+
     try:
         response = client.chat.completions.create(
             model="gpt-4",
@@ -88,7 +139,7 @@ def analyze_prompt(prompt):
             "language": "english"
         }
 
-def create_prediction(model_name, user_prompt):
+def create_prediction(user_prompt):
     """
     Creates the prediction request payload based on model and user inputs.
     """
@@ -99,17 +150,16 @@ def create_prediction(model_name, user_prompt):
 
     # Retrieve the voice_id from the VOICE_DATABASE
     voice_id = None
-    for voice_category, voices in VOICE_DATABASE.items():
-        if voice_category == voice_type:
-            voice_id = list(voices.values())[0]  # Use the first voice ID in the category
-            break
+    voices_in_category = VOICE_DATABASE.get(voice_type)
 
-    if not voice_id:
+    if voices_in_category:
+        voice_id = random.choice(list(voices_in_category.values()))
+    else:
         print(f"Voice type '{voice_type}' not recognized. Defaulting to 'male'.")
-        voice_id = list(VOICE_DATABASE["male"].values())[0]  # Default to the first male voice ID
+        voice_id = random.choice(list(VOICE_DATABASE["male"].values()))
 
     payload = {
-        "model": model_name,
+        "model": "eleven-multilingual-v2",
         "version": "0.0.1",
         "input": {
             "use_speaker_boost": False,
@@ -158,12 +208,12 @@ def get_prediction_result(prediction_id):
 
         time.sleep(1)
 
-def text_to_audio_generate(audio_request: TextToAudioRequest):
+def text_to_audio_generate(user_prompt :str):
     """
     Generates audio based on the selected model and text.
     """
     try:
-        prediction_id = create_prediction(audio_request.model_name, audio_request.prompt)
+        prediction_id = create_prediction(user_prompt)
         print(f"Prediction ID: {prediction_id}")  # Debugging line
 
         audio_result = get_prediction_result(prediction_id)
@@ -178,17 +228,17 @@ def text_to_audio_generate(audio_request: TextToAudioRequest):
         print(f"Error while fetching prediction: {e}")
         return None
 
-# Example usage
-if __name__ == "__main__":
-    audio_request = TextToAudioRequest(
-        prompt=input("Enter the text for audio generation: "),
-        model_name=input("Enter the model name ('kokoro-82m' or 'eleven-multilingual-v2'): ")
-    )
-    try:
-        audio_url = text_to_audio_generate(audio_request)
-        if audio_url:
-            print(f"Generated audio URL: {audio_url}")
-        else:
-            print("Failed to generate audio.")
-    except Exception as e:
-        print(f"Error: {e}")
+# # Example usage
+# if __name__ == "__main__":
+#     audio_request = TextToAudioRequest(
+#         prompt=input("Enter the text for audio generation: "),
+#         model_name=input("Enter the model name ('kokoro-82m' or 'eleven-multilingual-v2'): ")
+#     )
+#     try:
+#         audio_url = text_to_audio_generate(audio_request)
+#         if audio_url:
+#             print(f"Generated audio URL: {audio_url}")
+#         else:
+#             print("Failed to generate audio.")
+#     except Exception as e:
+#         print(f"Error: {e}")
