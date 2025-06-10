@@ -26,10 +26,6 @@ try:
     # Check if client is ready
     if weaviate_client.is_ready():
         print("Weaviate client connected successfully!")
-        
-        # Get schema to verify connection
-        schema = weaviate_client.schema.get()
-        print(f"Available classes: {[cls['class'] for cls in schema.get('classes', [])]}")
     else:
         print("Weaviate client is not ready")
         
@@ -38,7 +34,6 @@ except Exception as e:
 
 app.include_router(models_selector_router, prefix="/models-selector", tags=["prompt-handler"])
 app.include_router(style_get_router,prefix="/model_name_slug",tags =["style_slug"])
-app.include_router(models_selector_router, prefix="/models-selector", tags=["models_selector"])
 app.include_router(enhance_prompt_router, prefix="/enhance-prompt", tags=["enhance-prompt"])
 app.include_router(image_generator_router, prefix="/image-generator", tags=["image-generator"])
 app.include_router(audio_video_router, prefix="/video-generate", tags=["video-generate"])
@@ -46,7 +41,7 @@ app.include_router(content_creator_router, prefix="/content-creator", tags=["con
 app.include_router(image_to_image_process,prefix="/image-process",tags = ["/image-to-image-process"])
 app.include_router(audio_generate_router,prefix = "/audio-generate",tags = ["/text-to-audio"])
 app.include_router(video_to_text_router,prefix = "/video-to-text",tags = ["/video-to-text"])
-
+app.include_router(merge_video_audio_router,prefix="/merge-audio-video",tags=["merge-audio-video"])
 
 
 @app.on_event("startup")
@@ -64,10 +59,6 @@ async def shutdown_event():
 async def manual_refresh():
     fetch_and_index_all_products()
     return {"message": "Product index refreshed manually!"}
-
-
-app.include_router(content_creator_router, prefix="/content-creator", tags=["create-content"])
-app.include_router(merge_video_audio_router,prefix="/merge-audio-video",tags=["merge-audio-video"])
 
 
 

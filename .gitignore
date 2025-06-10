@@ -44,4 +44,5 @@ dist/
 *.egg-info/
 .vercel
 
-.Remzi/
+Remzi/
+.gitattributes/
