@@ -1,5 +1,6 @@
 import requests
 from app.schemas.TextToVedio import TextToVideoRequest
+from app.services._get_prediction import get_prediction
 import time
 import os
 from dotenv import load_dotenv
@@ -37,21 +38,6 @@ def create_prediction(prompt: str, model_name: str, duration: int):
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     return prediction["predictionID"]
- 
-def get_prediction(prediction_id):
-    while True:
-        result = requests.get(
-            f"https://api.eachlabs.ai/v1/prediction/{prediction_id}",
-            headers=HEADERS
-        ).json()
-       
-        if result["status"] == "success":
-            return result
-        elif result["status"] == "error":
-            raise Exception(f"Prediction failed: {result}")
-       
-        time.sleep(1)  # Wait before polling again
-
  
 def generate_video(data: TextToVideoRequest) -> str:
     # Generate a video based on the prompt, model name, and duration

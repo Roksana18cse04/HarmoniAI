@@ -22,7 +22,7 @@ def merge_audio_video(video_path, audio_path, output_path):
 
     try:
         subprocess.run(command, check=True)
-        print(f"✅ Merged successfully! Output saved as: {output_path}")
+        #print(f"✅ Merged successfully! Output saved as: {output_path}")
         return output_path
     except subprocess.CalledProcessError as e:
         print("❌ FFmpeg error:", e)
