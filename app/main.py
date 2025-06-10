@@ -16,6 +16,8 @@ from app.services.xml_to_faiss import fetch_and_index_all_products
 from app.routes.style_get_route import router as style_get_router
 from app.routes.Audio_generate import router as audio_generate_router
 from app.routes.video_to_text_route import router as video_to_text_router
+from app.routes.voice_cloning_route import router as voice_cloning_router
+from app.routes.pdf_extract_routes import router as pdf_extract_router
 import uvicorn
 import os
 
@@ -40,7 +42,8 @@ app.include_router(caption_generator_router,prefix="/caption-generator", tags=["
 app.include_router(image_to_image_process,prefix="/image-process",tags = ["/image-to-image-process"])
 app.include_router(audio_generate_router,prefix = "/audio-generate",tags = ["/text-to-audio"])
 app.include_router(video_to_text_router,prefix = "/video-to-text",tags = ["/video-to-text"])
-
+app.include_router(voice_cloning_router,prefix = "/voice-cloning",tags = ["/voice_cloning"])
+app.include_router(pdf_extract_router,prefix = "/pdf-to-text",tags = ["pdf extract"])
 
 @app.get("/manual-refresh-product-embedding")
 async def manual_refresh():

@@ -1,40 +1,29 @@
 import requests
-import time
 import os
-
+import time
 from openai import OpenAI
 from dotenv import load_dotenv
-from app.services._get_prediction import get_prediction
 
 
 # Load environment variables
 load_dotenv(override=True)
-
-# Initialize OpenAI client with the API key
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
-
 API_KEY = os.getenv("EACHLABS_API_KEY")
 HEADERS = {
     "X-API-Key": API_KEY,
     "Content-Type": "application/json"
 }
-def create_prediction():
+def create_pdf_to_text_prediction(pdf_url:str):
     response = requests.post(
         "https://api.eachlabs.ai/v1/prediction/",
         headers=HEADERS,
         json={
-            "model": "incredibly-fast-whisper",
+            "model": "pdf-to-text",
             "version": "0.0.1",
             "input": {
-  "task": "transcribe",
-  "audio": "your_file.audio/mp3",
-  "hf_token": "your hf token here",
-  "language": "None",
-  "timestamp": "chunk",
-  "batch_size": 24,
-  "diarise_audio": False
-},
+                "url": pdf_url
+            },
             "webhook_url": ""
         }
     )
