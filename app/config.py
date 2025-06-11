@@ -1,6 +1,4 @@
 # app/config.py
-
-import cloudinary
 import os
 
 
@@ -25,12 +23,4 @@ class config:
     IMAGE_PATH= os.path.join(DATA_PATH, "image")
 
 
-
-# Configure Cloudinary
-cloudinary.config(
-    cloud_name="dhubxnqvq",
-    api_key="191483941177317",
-    api_secret="_UxT7j99p2LnLZwAHznk4HlSFnw"
-
-)
 
