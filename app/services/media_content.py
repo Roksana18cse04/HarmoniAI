@@ -12,6 +12,7 @@ import asyncio
 from weaviate.classes.data import DataObject
 from weaviate.classes.query import MetadataQuery
 import ijson
+import numpy as np
 
 # # === Load ENV & API Key ===
 load_dotenv()
@@ -26,7 +27,7 @@ openai_client = OpenAI(api_key=OPENAI_API_KEY)
 weaviate_client = client
 
 # === Config ===
-BATCH_SIZE = 100
+BATCH_SIZE = 1000
 
 # === Process Content to Weaviate Format ===
 def process_content_for_weaviate(content: Dict, category_map: Dict) -> Dict:
@@ -222,20 +223,21 @@ def import_content_to_weaviate(data, category_map):
     logger.info("Import completed.")
 
 # === Embed text ===
-def embed_text(text: str):
+def embed_text(text):
     try:
         response = openai_client.embeddings.create(
             model="text-embedding-3-small",
             input=[text]
         )
-        return response.data[0].embedding
+        return np.array(response.data[0].embedding, dtype=np.float32)
     except Exception as e:
-        logger.error(f"Embedding error: {e}")
+        print(f"Failed to embed query text: {e}")
         return None
     
-def query_weaviate_media(user_prompt: str, top_k: int = 10):
+def query_weaviate_media(user_prompt, top_k: int = 10):
     """Query Weaviate for content items based on user prompt."""
     query_vector = embed_text(user_prompt)
+    print("type------------", type(query_vector))
     if query_vector is None:
         print("Embedding failed for prompt:", user_prompt)
         return []
@@ -244,12 +246,14 @@ def query_weaviate_media(user_prompt: str, top_k: int = 10):
         # Updated query for Weaviate v4
         if not weaviate_client.is_connected():
             weaviate_client.connect()
-        content_collection = weaviate_client.collections.get("ContentItem")
+        media_collection = weaviate_client.collections.get("ContentItem")
         
-        response = content_collection.query.near_vector(
-            near_vector=query_vector,
+        response = media_collection.query.hybrid(
+            query=user_prompt,
+            vector=query_vector.tolist(),  # manually provided embedding
+            alpha=0.5,
             limit=top_k,
-            return_metadata=MetadataQuery(distance=True)
+            return_metadata=MetadataQuery(score=True)
         )
         
         return [obj.properties for obj in response.objects]
@@ -260,7 +264,7 @@ def query_weaviate_media(user_prompt: str, top_k: int = 10):
     
 import requests    
 
-def fetch_all_media(batch_size=100): 
+def fetch_all_media(batch_size=1000): 
     try:
         content_url = "https://cdn.harmoniai.net/omuz.n_contents.json"
         categories_url = "https://cdn.harmoniai.net/omuz.n_categories.json"

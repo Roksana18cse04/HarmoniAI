@@ -113,6 +113,7 @@ def embed_text(text):
 # === Query Weaviate ===
 def query_weaviate_products(user_prompt, top_k=10):
     query_vector = embed_text(user_prompt)
+    print("type-----------", type(query_vector) )
     if query_vector is None:
         print("Embedding failed for prompt:", user_prompt)
         return []
@@ -122,14 +123,15 @@ def query_weaviate_products(user_prompt, top_k=10):
         if not client.is_connected():
             client.connect()
         product_collection = client.collections.get("Product")
-        
-        # Perform vector search
-        response = product_collection.query.near_vector(
-            near_vector=query_vector.tolist(),
+
+        response = product_collection.query.hybrid(
+            query=user_prompt,
+            vector=query_vector.tolist(),  # manually provided embedding
+            alpha=0.5,
             limit=top_k,
-            return_metadata=MetadataQuery(distance=True)
+            return_metadata=MetadataQuery(score=True)
         )
-        
+
         # Extract products from response
         products = []
         for item in response.objects:
@@ -140,14 +142,14 @@ def query_weaviate_products(user_prompt, top_k=10):
                 "price": item.properties.get("price"),
                 "link": item.properties.get("link"),
                 "image_link": item.properties.get("image_link"),
-                "distance": item.metadata.distance if item.metadata else None
+                "score": item.metadata.score if item.metadata else None
             }
             products.append(product)
-        
+
         if not products:
             print("No results found for:", user_prompt)
 
-        # Check total count of products
+        # Fetch total products
         print("Fetching total products...")
         aggregate_response = product_collection.aggregate.over_all(
             total_count=True
