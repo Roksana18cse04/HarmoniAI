@@ -1,28 +1,32 @@
 # app/utils/r2_uploader.py
-
 import boto3
-from botocore.client import Config
+from botocore.client import Config as BotoConfig
+from boto3.s3.transfer import TransferConfig
 from dotenv import load_dotenv
 import os
+from io import BytesIO
 
-# Load environment variables from .env file
+# Load env vars
 load_dotenv()
 
-# Secure configuration via environment variables
 ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL")
 ACCESS_KEY = os.getenv("R2_ACCESS_KEY")
 SECRET_KEY = os.getenv("R2_SECRET_KEY")
 REGION = os.getenv("R2_REGION", "auto")
 BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
-PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")  # e.g., https://cdn.harmoniai.net
+PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
+
+# Transfer configuration (for multipart upload)
+MULTIPART_CONFIG = TransferConfig(
+    multipart_threshold=100 * 1024 * 1024,      # 100MB
+    multipart_chunksize=100 * 1024 * 1024,      # 100MB
+    max_concurrency=10,                          # 8 threads
+    use_threads=True
+)
 
 def upload_to_r2(file_bytes: bytes, object_key: str) -> str:
     """
-    Uploads a file to R2 and returns the public URL.
-
-    :param file_bytes: File content in bytes
-    :param object_key: Path/key in the bucket (e.g., 'images/output.png')
-    :return: Public URL of the uploaded file
+    Uploads large files to R2 using multipart streaming upload.
     """
     session = boto3.session.Session()
     s3 = session.client(
@@ -30,12 +34,57 @@ def upload_to_r2(file_bytes: bytes, object_key: str) -> str:
         aws_access_key_id=ACCESS_KEY,
         aws_secret_access_key=SECRET_KEY,
         endpoint_url=ENDPOINT_URL,
-        config=Config(signature_version='s3v4'),
+        config=BotoConfig(signature_version='s3v4'),
+        region_name=REGION,
     )
 
-    s3.put_object(Bucket=BUCKET_NAME, Key=object_key, Body=file_bytes)
+    file_stream = BytesIO(file_bytes)  # Stream in memory
+    s3.upload_fileobj(file_stream, BUCKET_NAME, object_key, Config=MULTIPART_CONFIG)
 
     return f"{PUBLIC_BASE_URL}/{object_key}"
+
+
+
+
+
+
+
+# import boto3
+# from botocore.client import Config
+# from dotenv import load_dotenv
+# import os
+
+# # Load environment variables from .env file
+# load_dotenv()
+
+# # Secure configuration via environment variables
+# ENDPOINT_URL = os.getenv("R2_ENDPOINT_URL")
+# ACCESS_KEY = os.getenv("R2_ACCESS_KEY")
+# SECRET_KEY = os.getenv("R2_SECRET_KEY")
+# REGION = os.getenv("R2_REGION", "auto")
+# BUCKET_NAME = os.getenv("R2_BUCKET_NAME")
+# PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")  # e.g., https://cdn.harmoniai.net
+
+# def upload_to_r2(file_bytes: bytes, object_key: str) -> str:
+#     """
+#     Uploads a file to R2 and returns the public URL.
+
+#     :param file_bytes: File content in bytes
+#     :param object_key: Path/key in the bucket (e.g., 'images/output.png')
+#     :return: Public URL of the uploaded file
+#     """
+#     session = boto3.session.Session()
+#     s3 = session.client(
+#         service_name='s3',
+#         aws_access_key_id=ACCESS_KEY,
+#         aws_secret_access_key=SECRET_KEY,
+#         endpoint_url=ENDPOINT_URL,
+#         config=Config(signature_version='s3v4'),
+#     )
+
+#     s3.put_object(Bucket=BUCKET_NAME, Key=object_key, Body=file_bytes)
+
+#     return f"{PUBLIC_BASE_URL}/{object_key}"
 
 # # Local test block
 # if __name__ == "__main__":

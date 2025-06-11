@@ -3,7 +3,7 @@ import faiss
 import numpy as np
 from dotenv import load_dotenv
 from openai import OpenAI
-from app.services.parse_xml import get_products_from_xml
+from app.services.parse_xmlProduct import get_products_from_xml
 import pickle
 
 # === Load API Keys ===

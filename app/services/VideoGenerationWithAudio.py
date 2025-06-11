@@ -42,4 +42,3 @@ def create_prediction(audio_url:str,image_url:str):
     
     return prediction["predictionID"]
 
-
