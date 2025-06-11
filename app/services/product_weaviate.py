@@ -6,8 +6,7 @@ from dotenv import load_dotenv
 import os
 import weaviate.classes as wvc
 from weaviate.classes.query import MetadataQuery
-
-
+from more_itertools import chunked
 # === Load API Keys ===
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -51,7 +50,6 @@ def embed_products_in_batches(products):
     print(f"Total vectors created: {len(vectors)}")
     return vectors, metadata
 
-from more_itertools import chunked
 def upsert_products_to_weaviate(products):
     import time
       # Optional if you want clean chunking

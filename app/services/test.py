@@ -3,7 +3,7 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 import google.generativeai as genai
-from app.enum.platform import Platform
+
 
 # Load environment variables
 load_dotenv(override=True)
@@ -31,7 +31,7 @@ LANGUAGE_DATABASE = {
         "hu": "hu", "ko": "ko", "hi": "hi"
     }
 }
-def analyze_prompt_language_detect(input_text: str, platform: Platform) -> str:
+def analyze_prompt_language_detect(input_text: str, platform: str) -> str:
     """
     Detects the language of the input text using selected platform.
     """
@@ -39,13 +39,13 @@ def analyze_prompt_language_detect(input_text: str, platform: Platform) -> str:
     Identify the language of this text. Respond only with its name (e.g., English, Spanish, French):
     Text: "{input_text}"
     """
-
-    if platform == Platform.GEMINI:
+    platform = platform.upper()
+    if platform == "GEMINI":
         model = genai.GenerativeModel('gemini-2.5-flash-preview-05-20')
         response = model.generate_content(system_prompt)
         return response.text.strip().lower()
 
-    elif platform == Platform.CHATGPT:
+    elif platform =="CHATGPT":
         response = openai_client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "system", "content": system_prompt}],
@@ -54,7 +54,7 @@ def analyze_prompt_language_detect(input_text: str, platform: Platform) -> str:
         )
         return response.choices[0].message.content.strip().lower()
 
-    elif platform == Platform.GROK:
+    elif platform == "GROK":
         raise NotImplementedError("Grok support is not yet implemented.")
 
 
@@ -65,7 +65,7 @@ def create_voice_to_voice_prediction(
     model_name: str,
     input_text: str,
     audio_file_url: str,
-    platform: Platform
+    platform: str
 ) -> str:
     """
     Creates a voice-to-voice synthesis prediction for the specified model.

@@ -1,87 +1,71 @@
 import requests
 import os
-import time
 from openai import OpenAI
 from dotenv import load_dotenv
+import google.generativeai as genai
+
 
 # Load environment variables
 load_dotenv(override=True)
 
-# Initialize OpenAI client
+# Initialize API clients
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY)
-
-# Eachlabs API Key
-API_KEY = os.getenv("EACHLABS_API_KEY")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+EACHLABS_API_KEY = os.getenv("EACHLABS_API_KEY")
 HEADERS = {
-    "X-API-Key": API_KEY,
+    "X-API-Key": EACHLABS_API_KEY,
     "Content-Type": "application/json"
 }
 
-# Language database for model mapping
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
+
+# Language database
 LANGUAGE_DATABASE = {
     "openvoice": {
-        "english": "EN",
-        "en": "EN",
-        "es": "ES",
-        "fr": "FR",
-        "zh": "ZH",
-        "jp": "JP",
-        "kr": "KR",
-        "bengli" : "BN",
+        "english": "EN", "en": "EN", "es": "ES", "fr": "FR", "zh": "ZH", "jp": "JP", "kr": "KR",
     },
     "xtts-v2": {
-        "english": "en",
-        "en": "en",
-        "es": "es",
-        "fr": "fr",
-        "de": "de",
-        "it": "it",
-        "pt": "pt",
-        "pl": "pl",
-        "tr": "tr",
-        "ru": "ru",
-        "nl": "nl",
-        "cs": "cs",
-        "ar": "ar",
-        "zh": "zh",
-        "hu": "hu",
-        "ko": "ko",
-        "hi": "hi",
-        "bn": "bn"
+        "english": "en", "en": "en", "es": "es", "fr": "fr", "de": "de", "it": "it", "pt": "pt",
+        "pl": "pl", "tr": "tr", "ru": "ru", "nl": "nl", "cs": "cs", "ar": "ar", "zh": "zh",
+        "hu": "hu", "ko": "ko", "hi": "hi"
     }
 }
-
-def analyze_prompt_language_detect(input_text: str) -> str:
+def analyze_prompt_language_detect(input_text: str, platform: str) -> str:
     """
-    Detects the language of the input text using OpenAI and returns a normalized code.
+    Detects the language of the input text using selected platform.
     """
     system_prompt = f"""
     Identify the language of this text. Respond only with its name (e.g., English, Spanish, French):
     Text: "{input_text}"
     """
+    platform = platform.upper()
+    if platform == "GEMINI":
+        model = genai.GenerativeModel('gemini-2.5-flash-preview-05-20')
+        response = model.generate_content(system_prompt)
+        return response.text.strip().lower()
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "system", "content": system_prompt}],
-        max_tokens=5,
-        temperature=0
-    )
+    elif platform =="CHATGPT":
+        response = openai_client.chat.completions.create(
+            model="gpt-4",
+            messages=[{"role": "system", "content": system_prompt}],
+            max_tokens=5,
+            temperature=0
+        )
+        return response.choices[0].message.content.strip().lower()
 
-    detected = response.choices[0].message.content.strip().lower()
-    return detected
+    elif platform == "GROK":
+        raise NotImplementedError("Grok support is not yet implemented.")
+
 
 def map_language_for_model(model_name: str, detected_language: str) -> str:
-    """
-    Maps the detected language name/code to the correct format for the selected model.
-    """
-    language_map = LANGUAGE_DATABASE.get(model_name, {})
-    return language_map.get(detected_language, "en")  # Default fallback
+    return LANGUAGE_DATABASE.get(model_name, {}).get(detected_language.lower(), "en")
 
 def create_voice_to_voice_prediction(
     model_name: str,
     input_text: str,
-    audio_file_url: str
+    audio_file_url: str,
+    platform: str
 ) -> str:
     """
     Creates a voice-to-voice synthesis prediction for the specified model.
@@ -90,7 +74,7 @@ def create_voice_to_voice_prediction(
         raise ValueError("Unsupported model. Use 'openvoice' or 'xtts-v2'.")
 
     # Detect and map language
-    detected_language = analyze_prompt_language_detect(input_text)
+    detected_language = analyze_prompt_language_detect(input_text, platform)
     mapped_language = map_language_for_model(model_name, detected_language)
 
     input_payload = {

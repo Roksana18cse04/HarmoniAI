@@ -1,14 +1,13 @@
 from fastapi import APIRouter, UploadFile, File, Form
 from app.agents.voice_cloning_agents import voice_to_voice_clone_agents
 from app.utils.r2_uploader import upload_to_r2
-from app.enum.platform import Platform
 import uuid
 
 router = APIRouter()
 
 @router.post("/voice-clone")
 async def voice_cloning(
-    platform: Platform,
+    platform: str = Form(...),
     audio_file: UploadFile = File(...),
     model_name: str = Form(...),
     prompt: str = Form(...)
@@ -27,6 +26,7 @@ async def voice_cloning(
 
     return {
         "status": "success",
+        "platform":platform,
         "prompt": prompt,
         "audio_file": audio_file_url,
         "result": result

@@ -1,9 +1,9 @@
-from app.services.test import create_voice_to_voice_prediction
+from app.services.voice_to_voice import create_voice_to_voice_prediction
 from app.services._get_prediction import get_prediction
-from app.enum.platform import Platform
 
 
-def voice_to_voice_clone_agents(model_name: str,input_text: str,audio_file_url: str,platform: Platform):
+
+def voice_to_voice_clone_agents(model_name: str,input_text: str,audio_file_url: str,platform: str):
     # Get the prediction from the model
     try:
         # Create prediction
