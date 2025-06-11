@@ -60,7 +60,7 @@ app.include_router(merge_video_audio_router,prefix="/merge-audio-video",tags=["m
 @app.on_event("startup")
 async def startup_event():
     setup_schema()
-    fetch_all_media()
+    # fetch_all_media()
     
 
 @app.on_event("shutdown")
