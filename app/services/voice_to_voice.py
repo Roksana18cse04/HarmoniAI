@@ -11,14 +11,19 @@ load_dotenv(override=True)
 # Initialize API clients
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+NGROK_AUTHTOKEN = os.getenv("NGROK_AUTHTOKEN")
+
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
+
 EACHLABS_API_KEY = os.getenv("EACHLABS_API_KEY")
+
 HEADERS = {
     "X-API-Key": EACHLABS_API_KEY,
     "Content-Type": "application/json"
 }
 
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
-genai.configure(api_key=GEMINI_API_KEY)
+
 
 # Language database
 LANGUAGE_DATABASE = {

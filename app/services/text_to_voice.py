@@ -6,15 +6,20 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 import re
+import google.generativeai as genai
+from app.services._get_prediction import get_prediction
 
 
 # Load environment variables
 load_dotenv(override=True)
 
-# Initialize OpenAI client with the API key
+# Initialize API clients
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-client = OpenAI(api_key=OPENAI_API_KEY)
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+NGROK_AUTHTOKEN = os.getenv("NGROK_AUTHTOKEN")
 
+openai_client = OpenAI(api_key=OPENAI_API_KEY)
+genai.configure(api_key=GEMINI_API_KEY)
 API_KEY = os.getenv("EACHLABS_API_KEY")
 HEADERS = {
     "X-API-Key": API_KEY,
@@ -51,7 +56,7 @@ VOICE_DATABASE = {
     }
 }
 
-def analyze_prompt(prompt):
+def analyze_prompt(prompt,platform: str):
     """
     Analyzes the prompt to detect voice type, language, and the exact portion for audio conversion.
     Returns structured output in JSON format.
@@ -117,33 +122,46 @@ def analyze_prompt(prompt):
                 "language": "english"
             }
         """
+    platform = platform.upper()
 
     try:
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": system_message},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.3
-        )
-        message_content = response.choices[0].message.content.strip()
-        print(f"Analysis response: {message_content}")  # Debugging line
-        return json.loads(message_content)
+        if platform == "CHATGPT":
+            response = openai_client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": system_message},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.3
+            )
+            result = response.choices[0].message.content.strip()
+
+        elif platform == "GEMINI":
+            gemini_chat = genai.GenerativeModel("gemini-pro").start_chat()
+            result = gemini_chat.send_message(f"{system_message}\n\n{prompt}").text.strip()
+
+        elif platform == "GROK":
+            raise NotImplementedError("Grok platform not supported yet — no public SDK available.")
+
+        else:
+            raise ValueError(f"Unsupported platform: {platform}")
+
+        print(f"Analysis response ({platform}): {result}")
+        return json.loads(result)
+
     except Exception as e:
-        print(f"Error analyzing prompt: {e}")
-        # Default to English and male if analysis fails
+        print(f"[{platform}] Prompt analysis failed: {e}")
         return {
             "audio-prompt": prompt,
-            "voicetype": "male",
+            "voicetype": "female",
             "language": "english"
         }
 
-def create_prediction(user_prompt):
+def create_prediction(user_prompt,platform:str):
     """
     Creates the prediction request payload based on model and user inputs.
     """
-    analysis_result = analyze_prompt(user_prompt)
+    analysis_result = analyze_prompt(user_prompt,platform)
     voice_type = analysis_result.get('voicetype', 'male').lower()  # Default to 'male' if not provided
     language = analysis_result.get('language', 'english')
     audio_prompt = analysis_result.get('audio-prompt', user_prompt)
@@ -183,31 +201,6 @@ def create_prediction(user_prompt):
         raise Exception(f"Prediction failed: {prediction}")
     return prediction["predictionID"]
 
-def get_prediction_result(prediction_id):
-    """
-    Polls the prediction result until it's ready.
-    """
-    while True:
-        try:
-            response = requests.get(
-                f"https://api.eachlabs.ai/v1/prediction/{prediction_id}",
-                headers=HEADERS
-            )
-            response.raise_for_status()
-            result = response.json()
-
-            if result["status"] == "success":
-                return result
-            elif result["status"] == "error":
-                raise Exception(f"Prediction failed: {result}")
-            else:
-                print("Prediction is still processing, waiting...")
-        except requests.exceptions.RequestException as e:
-            print(f"Request failed: {e}")
-            raise
-
-        time.sleep(1)
-
 def text_to_audio_generate(user_prompt :str):
     """
     Generates audio based on the selected model and text.
@@ -216,7 +209,7 @@ def text_to_audio_generate(user_prompt :str):
         prediction_id = create_prediction(user_prompt)
         print(f"Prediction ID: {prediction_id}")  # Debugging line
 
-        audio_result = get_prediction_result(prediction_id)
+        audio_result = get_prediction(prediction_id)
         url = audio_result.get("output")
 
         if url:
@@ -227,18 +220,3 @@ def text_to_audio_generate(user_prompt :str):
     except Exception as e:
         print(f"Error while fetching prediction: {e}")
         return None
-
-# # Example usage
-# if __name__ == "__main__":
-#     audio_request = TextToAudioRequest(
-#         prompt=input("Enter the text for audio generation: "),
-#         model_name=input("Enter the model name ('kokoro-82m' or 'eleven-multilingual-v2'): ")
-#     )
-#     try:
-#         audio_url = text_to_audio_generate(audio_request)
-#         if audio_url:
-#             print(f"Generated audio URL: {audio_url}")
-#         else:
-#             print("Failed to generate audio.")
-#     except Exception as e:
-#         print(f"Error: {e}")
