@@ -1,5 +1,9 @@
 import requests
 from app.schemas.TextToVedio import TextToVideoRequest
+<<<<<<< HEAD
+=======
+from app.services._get_prediction import get_prediction
+>>>>>>> 386903fd4815c3a384d6f81a6c85ef300351a5e9
 import time
 import os
 from dotenv import load_dotenv
@@ -38,6 +42,7 @@ def create_prediction(prompt: str, model_name: str, duration: int):
         raise Exception(f"Prediction failed: {prediction}")
     return prediction["predictionID"]
  
+<<<<<<< HEAD
 def get_prediction(prediction_id):
     while True:
         result = requests.get(
@@ -53,6 +58,8 @@ def get_prediction(prediction_id):
         time.sleep(1)  # Wait before polling again
 
  
+=======
+>>>>>>> 386903fd4815c3a384d6f81a6c85ef300351a5e9
 def generate_video(data: TextToVideoRequest) -> str:
     # Generate a video based on the prompt, model name, and duration
     prediction_id = create_prediction(data.model_name, data.prompt, data.duration)

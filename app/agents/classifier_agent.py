@@ -22,7 +22,6 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
     # Add example prompts to help GPT understand intent
     examples = [
 
-
         {"prompt": "a fantasy castle on a mountain", "intent": "text-to-image"},
         {"prompt": "photo of a cat", "intent": "text-to-image"},
         {"prompt": "sunset over the ocean", "intent": "text-to-image"},
