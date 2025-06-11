@@ -1,4 +1,5 @@
 from openai import OpenAI
+from app.services.token_calculate import count_tokens
 import json
 import os
 from dotenv import load_dotenv
@@ -16,6 +17,7 @@ Your job is to:
 - Use the correct tone (e.g., professional for LinkedIn, casual for Instagram)
 - Include structure, hashtags, and emojis only if appropriate for the platform
 - Assume the content is from a first-person point of view unless stated otherwise
+- Behave like multilingual
 """
 
     user_prompt = f"Instruction: {instruction}"
@@ -31,6 +33,13 @@ Your job is to:
     )
     # print("response-------------", response)
     result_content = response.choices[0].message.content.strip()  # Access message content here
-    return result_content
+
+    input_token= count_tokens(instruction) 
+    output_token= count_tokens(result_content)
+    return {
+        "response":result_content,
+        "input_token": input_token,
+        "output_token": output_token
+    }
 
 

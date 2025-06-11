@@ -1,0 +1,14 @@
+'https://cdn.harmoniai.net/omuz.comments.json', 
+'https://cdn.harmoniai.net/omuz.event_cities.json', 
+'https://cdn.harmoniai.net/omuz.event_place_categories.json', 
+'https://cdn.harmoniai.net/omuz.event_places_new.json', 
+'https://cdn.harmoniai.net/omuz.follows.json', 
+'https://cdn.harmoniai.net/omuz.n_categories.json', 
+'https://cdn.harmoniai.net/omuz.n_event_categories.json', 
+'https://cdn.harmoniai.net/omuz.n_events.json', 
+'https://cdn.harmoniai.net/omuz.n_persons.json', 
+'https://cdn.harmoniai.net/omuz.rates.json', 
+'https://cdn.harmoniai.net/omuz.rates_bulk.json', 
+'https://cdn.harmoniai.net/users.json', 
+'https://cdn.harmoniai.net/omuz.n_contents.json'
+
