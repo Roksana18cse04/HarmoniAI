@@ -1,6 +1,7 @@
 import requests
 import time
 import os
+from app.services._get_prediction import get_prediction
 
 from openai import OpenAI
 from dotenv import load_dotenv
@@ -39,17 +40,3 @@ def create_prediction(video_url:str):
     
     return prediction["predictionID"]
 
-def get_prediction(prediction_id):
-    while True:
-        result = requests.get(
-            f"https://api.eachlabs.ai/v1/prediction/{prediction_id}",
-            headers=HEADERS
-        ).json()
-        
-        if result["status"] == "success":
-            return result
-        elif result["status"] == "error":
-            raise Exception(f"Prediction failed: {result}")
-        
-        time.sleep(1)  # Wait before polling again
-        
