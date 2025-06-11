@@ -1,12 +1,13 @@
 from app.services.test import create_voice_to_voice_prediction
 from app.services._get_prediction import get_prediction
+from app.enum.platform import Platform
 
 
-def voice_to_voice_clone_agents(model_name: str,input_text: str,audio_file_url: str):
+def voice_to_voice_clone_agents(model_name: str,input_text: str,audio_file_url: str,platform: Platform):
     # Get the prediction from the model
     try:
         # Create prediction
-        prediction_id = create_voice_to_voice_prediction(model_name,input_text,audio_file_url)
+        prediction_id = create_voice_to_voice_prediction(model_name,input_text,audio_file_url,platform)
         print(f"Prediction created: {prediction_id}")
         
         # Get result

@@ -1,6 +1,7 @@
 from app.services.fetch_models_info import fetch_models_info
 from app.agents.classifier_agent import classify_prompt_agent
 from app.agents.image_caption_agent import caption_generator
+from app.agents.content_creator_agent import generate_content_from_instruction
 from app.agents.shopping_agent import shopping_agent  
 from app.agents.media_agent import media_agent
 from app.agents.qa_agent import question_answer_agent 
@@ -50,14 +51,23 @@ def run_multi_agent_chain(prompt, file:Optional[UploadFile] = None):
 
     print("model_category['intent']:------------------", model_category["intent"])
     if model_category["intent"]=="unknown":
-        return "Sorry, I can't help with that."
+        return {
+            "result": "Sorry, I can't help with that.",
+            "intent": "unknown"
+        }
     elif model_category["intent"]=="shopping":
         # if the category is shopping, use the shopping agent to get product info
         shopping_result = shopping_agent(prompt)
-        return shopping_result
+        return {
+            "result": shopping_result,
+            "intent": "shopping"
+        }
     elif model_category["intent"]=="media-recommendation":
         response = media_agent(prompt) 
-        return response       
+        return {
+            "result": response,
+            "intent": "media-recommendation"
+        }     
     elif model_category["intent"]=="question-answering":
         response= question_answer_agent(prompt)
         print("result------", response)
@@ -69,11 +79,18 @@ def run_multi_agent_chain(prompt, file:Optional[UploadFile] = None):
         # Use the file if provided and valid, otherwise pass None
         if file is not None and (not hasattr(file, 'filename') or not file.filename):
             file = None
-
         # Run caption generation (prompt-only or image+prompt)
-        caption_text = caption_generator(file, prompt)
-        
-        return caption_text
+        caption_text = caption_generator(file, prompt)   
+        return {
+            "result": caption_text,
+            "intent": "caption-generate"
+        }  
+    elif model_category['intent'] == 'content_create':
+        response = generate_content_from_instruction(prompt)
+        return {
+            "result": response,
+            "intent": "content-generate"
+        }
     else:
         # fetch models based on the classified category
         models= fetch_models(prompt, models_info, model_category)
