@@ -11,6 +11,7 @@ from openai import OpenAI
 import asyncio
 from weaviate.classes.data import DataObject
 from weaviate.classes.query import MetadataQuery
+import ijson
 
 # # === Load ENV & API Key ===
 load_dotenv()
@@ -161,7 +162,6 @@ def generate_content_embeddings(items: list[dict]) -> list[tuple[dict, list[floa
 
 # === Load Data and Import to Weaviate ===
 def import_content_to_weaviate(data, category_map):
-    data=data[:500]
     try:
         # Get the collection
         if not weaviate_client.is_connected():
@@ -198,32 +198,23 @@ def import_content_to_weaviate(data, category_map):
             # Insert all objects at once using batch_insert
             try:
                 response = content_collection.data.insert_many(data_objects)
-                
-                # Check for any errors
                 if response.has_errors:
                     for error in response.errors:
-                        logger.error(f"Failed to import: {error}")
+                        logger.error(f"Batch {i // BATCH_SIZE + 1} error: {error}")
                 else:
-                    logger.info(f"Successfully imported {len(data_objects)} items in batch {i//BATCH_SIZE + 1}")
-                    
+                    logger.info(f"✅ Successfully imported {len(data_objects)} items in batch {i // BATCH_SIZE + 1}")
             except Exception as e:
-                logger.error(f"Batch import failed for chunk {i//BATCH_SIZE + 1}: {e}")
-                
-                # Fallback to individual inserts
-                logger.info("Attempting individual inserts for this chunk...")
-                successful_imports = 0
-                for processed_item, vector in item_vector_pairs:
+                logger.warning(f"⚠️ Batch insert failed for batch {i // BATCH_SIZE + 1}: {e}")
+                logger.info("Attempting individual fallback insert...")
+                success = 0
+                for item, vec in item_vector_pairs:
                     try:
-                        uuid = content_collection.data.insert(
-                            properties=processed_item,
-                            vector=vector
-                        )
-                        logger.info(f"Imported: {processed_item.get('title', 'Unknown')} with UUID: {uuid}")
-                        successful_imports += 1
-                    except Exception as individual_error:
-                        logger.error(f"Failed to import {processed_item.get('title', 'Unknown')}: {individual_error}")
-                
-                logger.info(f"Successfully imported {successful_imports} out of {len(item_vector_pairs)} items individually")
+                        uuid = content_collection.data.insert(properties=item, vector=vec)
+                        logger.debug(f"Inserted {item.get('title', 'Unknown')} with UUID {uuid}")
+                        success += 1
+                    except Exception as ind_e:
+                        logger.error(f"Failed individual insert: {item.get('title', 'Unknown')} - {ind_e}")
+                logger.info(f"✅ Individually imported {success}/{len(item_vector_pairs)} items in batch {i // BATCH_SIZE + 1}")
 
     except Exception as e:
         logger.error(f"Import process failed: {e}")
@@ -267,64 +258,56 @@ def query_weaviate_media(user_prompt: str, top_k: int = 10):
         print("Query error:", e)
         return []
     
-def fetch_all_media(): 
+import requests    
+
+def fetch_all_media(batch_size=100): 
     try:
-        base_dir = Path(config.BASE_DIR).parent
-        content_path = os.path.join(base_dir, "Remzi", "omuz.n_contents.json")
-        categories_path = os.path.join(base_dir, "Remzi", "omuz.n_categories.json")
-        
-        # Load category map
-        with open(categories_path, 'r', encoding='utf-8') as f:
-            categories_data = json.load(f)
+        content_url = "https://cdn.harmoniai.net/omuz.n_contents.json"
+        categories_url = "https://cdn.harmoniai.net/omuz.n_categories.json"
+
+        # Load categories once (small JSON)
+        cat_res = requests.get(categories_url)
+        if cat_res.status_code != 200:
+            logger.error(f"Failed to load categories: {cat_res.status_code}")
+            return
+
+        categories_data = cat_res.json()
         category_map = {
             cat.get("_id", {}).get("$oid"): cat.get("title", "")
             for cat in categories_data if cat.get("_id") and cat.get("title")
         }
 
-        # Load content
-        with open(content_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
+        # Stream content items
+        content_res = requests.get(content_url, stream=True)
+        if content_res.status_code != 200:
+            logger.error(f"Failed to load content: {content_res.status_code}")
+            return
 
-        logger.info(f"Loaded {len(data)} content items.")
-        import_content_to_weaviate(data, category_map)
+        logger.info("Streaming content items...")
+
+        items = ijson.items(content_res.raw, 'item')
+        batch = []
+        count = 0
+
+        for item in items:
+            batch.append(item)
+            if len(batch) >= batch_size:
+                import_content_to_weaviate(batch, category_map)
+                count += len(batch)
+                batch = []
+                logger.info(f"Imported {count} content items.")
+
+        # Import any remaining items
+        if batch:
+            import_content_to_weaviate(batch, category_map)
+            count += len(batch)
+
+        logger.info(f"Imported {count} content items.")
+
     except Exception as e:
         logger.error(f"Failed to fetch and import media: {e}")
     finally:
         weaviate_client.close()
-    
-    
-# # === Entrypoint ===
 
-# if __name__ == "__main__":
-#     from app.config import config
-#     base_dir = Path(config.BASE_DIR).parent
-#     content_path = os.path.join(base_dir, "Remzi", "omuz.n_contents.json")
-#     categories_path = os.path.join(base_dir, "Remzi", "omuz.n_categories.json")
-
-#     async def main():
-#         try:
-#             with open(categories_path, 'r', encoding='utf-8') as f:
-#                 categories_data = json.load(f)
-#             category_map = {
-#                 cat.get("_id", {}).get("$oid"): cat.get("title", "")
-#                 for cat in categories_data if cat.get("_id") and cat.get("title")
-#             }
-
-#             with open(content_path, 'r', encoding='utf-8') as f:
-#                 data = json.load(f)
-
-#             # Process first 50 items
-#             for content_item in data[:50]:
-#                 res = process_content_for_weaviate(content_item, category_map)
-#                 print(res)
-
-#             # for d in data:
-#             #     if d.get("category_ids") == '5fec4ff395675ff6952edeb1':
-#             #         print(d)
-#             #         break
-
-#             # import_content_to_weaviate(data, category_map)
-#         finally:
-#             weaviate_client.close()  # ✅ Proper cleanup to avoid warning
-
-#     asyncio.run(main())
+        
+        
