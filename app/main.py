@@ -73,7 +73,6 @@ async def manual_refresh():
     return {"message": "Product index refreshed manually!"}
 
 
-
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Multi-Agent System!"}
