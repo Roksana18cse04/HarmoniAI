@@ -1,4 +1,4 @@
-from app.services.voice_to_voice import create_voice_to_voice_prediction
+from app.services.test import create_voice_to_voice_prediction
 from app.services._get_prediction import get_prediction
 
 

@@ -76,7 +76,7 @@ def analyze_prompt_language_detect(input_text: str) -> str:
         return response.text.strip().lower()
     else:
         response = openai_client.chat.completions.create(
-            model="gpt-4o-mini",
+            model="gpt-4",
             messages=[{"role": "system", "content": system_prompt}],
             max_tokens=5,
             temperature=0
