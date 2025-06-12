@@ -65,7 +65,7 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    weaviate_client.close()
+    await weaviate_client.close()
 
 @app.get("/manual-refresh-product-embedding")
 async def manual_refresh():

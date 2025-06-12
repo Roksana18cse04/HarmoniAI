@@ -1,5 +1,6 @@
 from openai import OpenAI
-from app.services.token_calculate import count_tokens
+from app.services.token_calculate import price_calculate
+from app.services.llm_provider import LLMProvider
 import json
 import os
 from dotenv import load_dotenv
@@ -21,25 +22,13 @@ Your job is to:
 """
 
     user_prompt = f"Instruction: {instruction}"
-
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": system_prompt.strip()},
-            {"role": "user", "content": user_prompt.strip()}
-        ],
-        temperature=0.7,
-        max_tokens=500
-    )
-    # print("response-------------", response)
-    result_content = response.choices[0].message.content.strip()  # Access message content here
-
-    input_token= count_tokens(instruction) 
-    output_token= count_tokens(result_content)
+    platform='chapgpt'
+    llm = LLMProvider(platform)
+    response = llm.generate_response(instruction, system_prompt)   
+    price = price_calculate(instruction, response)
     return {
-        "response":result_content,
-        "input_token": input_token,
-        "output_token": output_token
+        "response":response,
+        "price": price
     }
 
 
