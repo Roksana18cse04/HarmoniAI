@@ -3,5 +3,6 @@ from fastapi import Form
 
 class InputRequest(BaseModel):
     prompt:str = Form(...)
+    platform :str = Form(...)
     
     

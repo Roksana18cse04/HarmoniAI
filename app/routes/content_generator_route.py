@@ -12,5 +12,5 @@ router= APIRouter()
 )
 async def content_creator_endpoint(data: InputRequest):
     
-    response=generate_content_from_instruction(data.prompt)
+    response=generate_content_from_instruction(data.prompt,data.platform)
     return response

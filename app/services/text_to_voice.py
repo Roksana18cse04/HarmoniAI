@@ -8,18 +8,13 @@ from dotenv import load_dotenv
 import re
 import google.generativeai as genai
 from app.services._get_prediction import get_prediction
+from app.services.llm_provider import LLMProvider
+from app.services.token_calculate import price_calculate
 
 
 # Load environment variables
 load_dotenv(override=True)
 
-# Initialize API clients
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-NGROK_AUTHTOKEN = os.getenv("NGROK_AUTHTOKEN")
-
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
-genai.configure(api_key=GEMINI_API_KEY)
 API_KEY = os.getenv("EACHLABS_API_KEY")
 HEADERS = {
     "X-API-Key": API_KEY,
@@ -55,8 +50,7 @@ VOICE_DATABASE = {
         "Will": "bIHbv24MWmeRgasZH58o"
     }
 }
-
-def analyze_prompt(prompt,platform: str):
+def analyze_prompt(prompt: str, platform: str) -> dict:
     """
     Analyzes the prompt to detect voice type, language, and the exact portion for audio conversion.
     Returns structured output in JSON format.
@@ -64,98 +58,50 @@ def analyze_prompt(prompt,platform: str):
     system_message = """
         You are a prompt analyzer for a text-to-speech (TTS) generation system.
 
-        Your job is to extract clean, voice-ready content from a user's and return metadata in a valid JSON format.
+        Your job is to extract clean, voice-ready content from a user's prompt and return metadata in a valid JSON format.
 
-            Your response must follow this structure:
+        Your response must follow this structure:
 
-            {
-                "audio-prompt": "<The exact sentence or quoted phrase that should be converted to speech (preferably quoted speech if available), max 2–3 clean sentences.>",
-                "voicetype": "<Detected voice type: male | female | child. Default to 'female' if not specified.>",
-                "language": "<Detected language (e.g., english, spanish). Default to 'english' if unclear.>"
-            }
+        {
+            "audio-prompt": "<The exact sentence or quoted phrase that should be converted to speech (preferably quoted speech if available), max 2–3 clean sentences.>",
+            "voicetype": "<Detected voice type: male | female | child. Default to 'female' if not specified.>",
+            "language": "<Detected language (e.g., english, spanish). Default to 'english' if unclear.>"
+        }
 
-            Rules:
-            - ✅ If the user prompt contains quoted text (like “...”, "..." or ‘...’), extract ONLY the quoted part for `audio-prompt`.
-            - ✅ If there is no quoted text, extract up to 2–3 clean, complete sentences suitable for TTS.
-            - ❌ Do not include instructions, metadata, or context text.
-            - 🎯 Only include voice-appropriate, speakable content.
-            - 🔁 Always return valid JSON. Do not include commentary or explanations outside the JSON.
-
-            Examples:
-
-            Input:
-            a man says "who are you when you come"
-
-            Output:
-            {
-                "audio-prompt": "who are you when you come",
-                "voicetype": "male",
-                "language": "english"
-            }
-
-            Input:
-            Generate a girl’s voice to say something like: “Hello, and welcome to our Python basics class.”
-
-            Output:
-            {
-                "audio-prompt": "Hello, and welcome to our Python basics class.",
-                "voicetype": "female",
-                "language": "english"
-            }
-
-            Input:
-            Create an excited child voice saying something fun.
-
-            Output:
-            {
-                "audio-prompt": "Let's go on an adventure! It's going to be so much fun!",
-                "voicetype": "child",
-                "language": "english"
-            }
-            Input : 
-            a man says who are you when you come and then he says I am a
-            Output :
-            {
-                "audio-prompt": "who are you when you come and then he says I am a
-                ",
-                "voicetype": "male",
-                "language": "english"
-            }
-        """
-    platform = platform.upper()
+        Rules:
+        - ✅ If the user prompt contains quoted text (like “...”, "..." or ‘...’), extract ONLY the quoted part for `audio-prompt`.
+        - ✅ If there is no quoted text, extract up to 2–3 clean, complete sentences suitable for TTS.
+        - ❌ Do not include instructions, metadata, or context text.
+        - 🎯 Only include voice-appropriate, speakable content.
+        - 🔁 Always return valid JSON. Do not include commentary or explanations outside the JSON.
+    """
 
     try:
-        if platform == "CHATGPT":
-            response = openai_client.chat.completions.create(
-                model="gpt-4",
-                messages=[
-                    {"role": "system", "content": system_message},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.3
-            )
-            result = response.choices[0].message.content.strip()
+        llm = LLMProvider(platform)
+        response_text = llm.generate_response(system_message, prompt)
+        # Parse JSON safely
+        parsed = json.loads(response_text)
+        # Provide fallback defaults if keys missing
+        audio_prompt = parsed.get("audio-prompt", prompt)
+        voicetype = parsed.get("voicetype", "female")
+        language = parsed.get("language", "english")
 
-        elif platform == "GEMINI":
-            gemini_chat = genai.GenerativeModel("gemini-pro").start_chat()
-            result = gemini_chat.send_message(f"{system_message}\n\n{prompt}").text.strip()
-
-        elif platform == "GROK":
-            raise NotImplementedError("Grok platform not supported yet — no public SDK available.")
-
-        else:
-            raise ValueError(f"Unsupported platform: {platform}")
-
-        print(f"Analysis response ({platform}): {result}")
-        return json.loads(result)
+        return {
+            "prompt":prompt,
+            "audio-prompt": audio_prompt,
+            "voicetype": voicetype,
+            "language": language
+        }
 
     except Exception as e:
         print(f"[{platform}] Prompt analysis failed: {e}")
+        # Fallback default if analysis fails
         return {
             "audio-prompt": prompt,
             "voicetype": "female",
             "language": "english"
         }
+
 
 def create_prediction(user_prompt,platform:str):
     """
@@ -201,7 +147,7 @@ def create_prediction(user_prompt,platform:str):
         raise Exception(f"Prediction failed: {prediction}")
     return prediction["predictionID"]
 
-def text_to_audio_generate(user_prompt :str):
+def text_to_audio_generate(user_prompt :str,platform:str):
     """
     Generates audio based on the selected model and text.
     """
@@ -214,7 +160,10 @@ def text_to_audio_generate(user_prompt :str):
 
         if url:
             print(f"Audio generated successfully: {url}")
-            return url
+            return {
+                "platform": platform,
+                "audio": url               
+            }
         else:
             raise Exception("Audio generation failed: No output URL found.")
     except Exception as e:

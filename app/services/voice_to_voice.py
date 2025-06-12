@@ -3,6 +3,8 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 import google.generativeai as genai
+from app.services.llm_provider import LLMProvider
+from app.services.token_calculate import price_calculate
 
 
 # Load environment variables
@@ -36,32 +38,28 @@ LANGUAGE_DATABASE = {
         "hu": "hu", "ko": "ko", "hi": "hi"
     }
 }
-def analyze_prompt_language_detect(input_text: str, platform: str) -> str:
+def analyze_prompt_language_detect(input_text: str, platform: str) -> dict:
     """
-    Detects the language of the input text using selected platform.
+    Detects the language of the input text using the specified LLM platform.
+    Returns both the detected language and the cost estimation.
     """
-    system_prompt = f"""
-    Identify the language of this text. Respond only with its name (e.g., English, Spanish, French):
-    Text: "{input_text}"
+    from app.services.llm_provider import LLMProvider
+    from app.services.token_calculate import price_calculate
+
+    system_prompt = """
+    Identify the language of this text. Respond only with the language name (e.g., English, Spanish, French).
     """
-    platform = platform.upper()
-    if platform == "GEMINI":
-        model = genai.GenerativeModel('gemini-2.5-flash-preview-05-20')
-        response = model.generate_content(system_prompt)
-        return response.text.strip().lower()
+    user_prompt = f'Text: "{input_text}"'
 
-    elif platform =="CHATGPT":
-        response = openai_client.chat.completions.create(
-            model="gpt-4",
-            messages=[{"role": "system", "content": system_prompt}],
-            max_tokens=5,
-            temperature=0
-        )
-        return response.choices[0].message.content.strip().lower()
+    llm = LLMProvider(platform)
+    response = llm.generate_response(system_prompt, user_prompt)
+    
+    price = price_calculate(input_text, response)
 
-    elif platform == "GROK":
-        raise NotImplementedError("Grok support is not yet implemented.")
-
+    return {
+        "detected_language": response.strip(),
+        "price": price
+    }
 
 def map_language_for_model(model_name: str, detected_language: str) -> str:
     return LANGUAGE_DATABASE.get(model_name, {}).get(detected_language.lower(), "en")

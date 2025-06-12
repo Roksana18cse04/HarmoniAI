@@ -56,7 +56,7 @@ class LLMProvider:
     def _call_google(self, system_prompt, user_prompt):
         url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
         headers = {"Content-Type": "application/json"}
-        params = {"key": os.getenv("GOOGLE_API_KEY")}
+        params = {"key": os.getenv("GEMINI_API_KEY")}
         payload = {
             "contents": [{
                 "parts": [
