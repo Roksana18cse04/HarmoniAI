@@ -27,8 +27,8 @@ class LLMProvider:
         response = client.chat.completions.create(
             model="gpt-4",
             messages=[
-                {"role": "system", "content": system_prompt.strip()},
-                {"role": "user", "content": user_prompt.strip()}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
             temperature=0.7,
             max_tokens=500,
@@ -36,6 +36,7 @@ class LLMProvider:
         return response.choices[0].message.content.strip()
 
     def _call_groq(self, system_prompt, user_prompt):
+        print("call groq")
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {os.getenv('GROQ_API_KEY')}",
@@ -44,26 +45,29 @@ class LLMProvider:
         payload = {
             "model": "llama3-70b-8192",
             "messages": [
-                {"role": "system", "content": system_prompt.strip()},
-                {"role": "user", "content": user_prompt.strip()}
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
             ],
             "temperature": 0.7,
             "max_tokens": 500,
         }
         response = requests.post(url, headers=headers, json=payload)
-        return response.json()["choices"][0]["message"]["content"].strip()
+        return response.json()["choices"][0]["message"]["content"]
 
     def _call_google(self, system_prompt, user_prompt):
-        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+        print("call google")
+        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent"
         headers = {"Content-Type": "application/json"}
         params = {"key": os.getenv("GEMINI_API_KEY")}
         payload = {
             "contents": [{
                 "parts": [
-                    {"text": system_prompt.strip()},
-                    {"text": user_prompt.strip()}
+                    {"text": system_prompt},
+                    {"text": user_prompt}
                 ]
             }]
         }
         response = requests.post(url, headers=headers, params=params, json=payload)
         return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+
+
