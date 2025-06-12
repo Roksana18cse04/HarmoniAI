@@ -24,4 +24,3 @@ weaviate-client==4.14.0
 more_itertools
 ijson
 boto3
-google-generativeai 

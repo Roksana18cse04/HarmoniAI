@@ -85,7 +85,7 @@ def run_multi_agent_chain(prompt, file:Optional[UploadFile] = None):
             "result": caption_text,
             "intent": "caption-generate"
         }  
-    elif model_category['intent'] == 'content_create':
+    elif model_category['intent'] == 'content-create':
         response = generate_content_from_instruction(prompt)
         return {
             "result": response,
