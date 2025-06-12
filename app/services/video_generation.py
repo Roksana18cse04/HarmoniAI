@@ -38,7 +38,6 @@ def create_prediction(prompt: str, model_name: str, duration: int):
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     return prediction["predictionID"]
- 
 def get_prediction(prediction_id):
     while True:
         result = requests.get(
@@ -52,7 +51,6 @@ def get_prediction(prediction_id):
             raise Exception(f"Prediction failed: {result}")
        
         time.sleep(1)  # Wait before polling again
-
 def generate_video(data: TextToVideoRequest) -> str:
     # Generate a video based on the prompt, model name, and duration
     prediction_id = create_prediction(data.model_name, data.prompt, data.duration)
