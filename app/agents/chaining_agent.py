@@ -25,7 +25,7 @@ def fetch_models(prompt, models_info, model_category):
     print("models:------------------", models)      
     return models
 
-def run_multi_agent_chain(prompt, file:Optional[UploadFile] = None):
+def run_multi_agent_chain(platform, prompt, file:Optional[UploadFile] = None):
     # correct prompt spelling 
     prompt= correct_spelling(prompt)
 
@@ -86,7 +86,7 @@ def run_multi_agent_chain(prompt, file:Optional[UploadFile] = None):
             "intent": "caption-generate"
         }  
     elif model_category['intent'] == 'content-create':
-        response = generate_content_from_instruction(prompt)
+        response = generate_content_from_instruction(prompt, platform)
         return {
             "result": response,
             "intent": "content-generate"

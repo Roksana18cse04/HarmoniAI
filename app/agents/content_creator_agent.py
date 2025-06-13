@@ -26,8 +26,8 @@ Your job is to:
     llm = LLMProvider(platform)
     response = llm.generate_response(system_prompt, user_prompt)
 
-    price = price_calculate(instruction, response)
-
+    # price = price_calculate(instruction, response)
+    price=0
     return {
         "response": response,
         "price": price

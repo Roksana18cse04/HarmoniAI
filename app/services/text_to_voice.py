@@ -6,7 +6,6 @@ import json
 from openai import OpenAI
 from dotenv import load_dotenv
 import re
-import google.generativeai as genai
 from app.services._get_prediction import get_prediction
 from app.services.llm_provider import LLMProvider
 from app.services.token_calculate import price_calculate
