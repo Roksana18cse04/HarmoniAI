@@ -1,5 +1,5 @@
 from openai import OpenAI
-from app.services.token_calculate import price_calculate
+from app.services.price_calculate import price_calculate
 from app.services.llm_provider import LLMProvider
 import json
 import os
@@ -26,8 +26,7 @@ Your job is to:
     llm = LLMProvider(platform)
     response = llm.generate_response(system_prompt, user_prompt)
 
-    # price = price_calculate(instruction, response)
-    price=0
+    price = price_calculate(platform, instruction, response)
     return {
         "response": response,
         "price": price

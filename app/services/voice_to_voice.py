@@ -3,7 +3,7 @@ import os
 from openai import OpenAI
 from dotenv import load_dotenv
 from app.services.llm_provider import LLMProvider
-from app.services.token_calculate import price_calculate
+from app.services.price_calculate import price_calculate
 
 
 # Load environment variables

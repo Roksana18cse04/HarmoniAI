@@ -1,5 +1,5 @@
 from openai import OpenAI
-from app.services.token_calculate import count_tokens
+from app.services.price_calculate import count_tokens
 import base64
 from typing import Optional
 from app.config import config
