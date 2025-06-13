@@ -35,7 +35,10 @@ def enhance_prompt(base_prompt: str, target_model: str, platform: str) -> tuple[
         # Calculate price based on base prompt and enhanced prompt
         price = price_calculate(base_prompt, enhanced)
         
-        return price, enhanced
+        return {
+            "response": enhanced,
+            "price": price
+        }
     
     except Exception as e:
         print(f"[{platform}] Error enhancing prompt: {e}")
