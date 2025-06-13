@@ -8,7 +8,8 @@ router = APIRouter()
 @router.post("/image-to-process-images")
 async def process_images(
     prompt: str = Form(...),
-    image_files: List[UploadFile] = File(...)
+    image_files: List[UploadFile] = File(...),
+    intend : str = Form(...)
 ):
     uploaded_image_urls = []
 
@@ -28,7 +29,8 @@ async def process_images(
         return {
             "prompt": prompt,
             "input_images": {f"image_{i}": url for i, url in enumerate(uploaded_image_urls)},
-            "result": result
+            "result": result,
+            "intend": intend
         }
     except Exception as e:
         return {"error": f"Image processing failed: {str(e)}"}

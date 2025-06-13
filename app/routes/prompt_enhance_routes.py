@@ -6,7 +6,7 @@ from app.services.enhance_prompt_generate import enhance_prompt
 enhance_router = APIRouter()
 
 @enhance_router.post("/enhance-prompt/", response_model=EnhanceResponse)
-async def get_enhanced_prompt(request: EnhanceRequest,platform: str = Form(...)) -> EnhanceResponse:
+async def get_enhanced_prompt(request: EnhanceRequest) -> EnhanceResponse:
     """
     Handle the enhancement of a prompt.
     :param request: The request body containing base_prompt and target_model.
@@ -14,9 +14,10 @@ async def get_enhanced_prompt(request: EnhanceRequest,platform: str = Form(...))
     """
     base_prompt = request.base_prompt
     target_model = request.target_model
+    platform = request.platform
     
     # Get the enhanced prompt using the enhance_prompt function from basemodel.py
-    enhanced_prompt = enhance_prompt(base_prompt, target_model,platform)
+    enhanced_prompt = enhance_prompt(base_prompt, target_model,request.platform)
     
     # Return the response using the EnhanceResponse Pydantic model
     return EnhanceResponse(

@@ -10,15 +10,14 @@ async def voice_cloning(
     platform: str = Form(...),
     audio_file: UploadFile = File(...),
     model_name: str = Form(...),
-    prompt: str = Form(...)
+    prompt: str = Form(...),
+    intend : str = Form(...),
 ):
     # Generate a unique object key using UUID
     object_key = f"voice-clone-audio/{uuid.uuid4()}.wav"
 
     file_bytes = await audio_file.read()
     audio_file_url = upload_to_r2(file_bytes, object_key)
-
-
 
     # Pass to agent
     result = voice_to_voice_clone_agents(model_name, prompt, audio_file_url,platform)
@@ -29,5 +28,6 @@ async def voice_cloning(
         "platform":platform,
         "prompt": prompt,
         "audio_file": audio_file_url,
-        "result": result
+        "result": result,
+        "intend":intend
     }

@@ -1,14 +1,15 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File,Form
 from app.utils.r2_uploader import upload_to_r2
 from app.agents.audio_video import generate_video_with_audio
 from app.schemas.video_with_audio import VideoWithAudioRequest
 
 router = APIRouter()
 
-@router.post("/video-generate")
+@router.post("/image-video-generate")
 async def video_generate(
     image_file: UploadFile = File(...),
-    audio_file: UploadFile = File(...)
+    audio_file: UploadFile = File(...),
+    intend : str=Form(...)
 ):
     # Read file bytes
     image_bytes = await image_file.read()
@@ -32,5 +33,6 @@ async def video_generate(
     return {
         "image_url": image_url,
         "audio_url": audio_url,
-        "video_url": video_url
+        "video_url": video_url,
+        "intend": intend
     }
