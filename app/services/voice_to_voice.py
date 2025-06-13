@@ -2,7 +2,6 @@ import requests
 import os
 from openai import OpenAI
 from dotenv import load_dotenv
-import google.generativeai as genai
 from app.services.llm_provider import LLMProvider
 from app.services.token_calculate import price_calculate
 
@@ -16,7 +15,6 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 NGROK_AUTHTOKEN = os.getenv("NGROK_AUTHTOKEN")
 
 openai_client = OpenAI(api_key=OPENAI_API_KEY)
-genai.configure(api_key=GEMINI_API_KEY)
 
 EACHLABS_API_KEY = os.getenv("EACHLABS_API_KEY")
 
@@ -43,8 +41,6 @@ def analyze_prompt_language_detect(input_text: str, platform: str) -> dict:
     Detects the language of the input text using the specified LLM platform.
     Returns both the detected language and the cost estimation.
     """
-    from app.services.llm_provider import LLMProvider
-    from app.services.token_calculate import price_calculate
 
     system_prompt = """
     Identify the language of this text. Respond only with the language name (e.g., English, Spanish, French).

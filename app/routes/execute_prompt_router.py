@@ -6,6 +6,7 @@ router = APIRouter()
 
 @router.post("/execute-prompt")
 async def execute_prompt(
+    platform: str = Form(...),
     prompt: str = Form(...),
     file: Optional[Union[UploadFile, str]] = File(None)
 ):
@@ -19,7 +20,7 @@ async def execute_prompt(
             print(f"Received string instead of file: {file}")
             # You might want to convert string to UploadFile or handle differently
     
-    result = run_multi_agent_chain(prompt, processed_file)
+    result = run_multi_agent_chain(platform, prompt, processed_file)
     return {"result": result}
     
     
