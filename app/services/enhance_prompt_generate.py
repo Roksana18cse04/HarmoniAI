@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 import os
 from app.services.llm_provider import LLMProvider
-from app.services.token_calculate import price_calculate
+from app.services.price_calculate import price_calculate
 
 load_dotenv(override=True)
 

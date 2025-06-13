@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 import re
 from app.services._get_prediction import get_prediction
 from app.services.llm_provider import LLMProvider
-from app.services.token_calculate import price_calculate
+from app.services.price_calculate import price_calculate
 
 
 # Load environment variables
