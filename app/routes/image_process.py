@@ -9,7 +9,7 @@ router = APIRouter()
 async def process_images(
     prompt: str = Form(...),
     image_files: List[UploadFile] = File(...),
-    intend : str = Form(...)
+    intend : str = Form(...),
 ):
     uploaded_image_urls = []
 

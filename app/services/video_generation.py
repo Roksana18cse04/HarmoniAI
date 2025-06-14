@@ -38,6 +38,7 @@ def create_prediction(prompt: str, model_name: str, duration: int):
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     return prediction["predictionID"]
+
 def get_prediction(prediction_id):
     while True:
         result = requests.get(
@@ -51,40 +52,3 @@ def get_prediction(prediction_id):
             raise Exception(f"Prediction failed: {result}")
        
         time.sleep(1)  # Wait before polling again
-def generate_video(data: TextToVideoRequest) -> str:
-    # Generate a video based on the prompt, model name, and duration
-    prediction_id = create_prediction(data.model_name, data.prompt, data.duration)
-    try:
-        video_url = get_prediction(prediction_id)
-        url = video_url.get("output")
-        if url:
-            return url
-        else:
-            raise Exception("Video generation failed: No output URL found.")
-    except Exception as e:
-        print(f"Error while fetching prediction: {e}")
-        raise
-
-# Example usage
-if __name__ == "__main__":
-    prompt = input("Enter the prompt for video generation: ")
-    model_name = input("Enter the model name: ")
-    duration = int(input("Enter the duration (in seconds): "))
-
-    try:
-        # Generate video and get the result
-        from app.schemas.TextToVedio import TextToVideoRequest
-        
-        data = TextToVideoRequest(
-            prompt=prompt,
-            model_name=model_name,
-            duration=duration
-        )
-        video_url = generate_video(data)
-        if video_url:
-            print(f"Generated video URL: {video_url}")
-        else:
-            raise Exception("No video URL returned.")
-    except Exception as e:
-        print(f"Error: {e}")
-

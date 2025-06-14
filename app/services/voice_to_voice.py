@@ -8,23 +8,12 @@ from app.services.price_calculate import price_calculate
 
 # Load environment variables
 load_dotenv(override=True)
-
-# Initialize API clients
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-NGROK_AUTHTOKEN = os.getenv("NGROK_AUTHTOKEN")
-
-openai_client = OpenAI(api_key=OPENAI_API_KEY)
-
 EACHLABS_API_KEY = os.getenv("EACHLABS_API_KEY")
 
 HEADERS = {
     "X-API-Key": EACHLABS_API_KEY,
     "Content-Type": "application/json"
 }
-
-
-
 # Language database
 LANGUAGE_DATABASE = {
     "openvoice": {
@@ -50,7 +39,7 @@ def analyze_prompt_language_detect(input_text: str, platform: str) -> dict:
     llm = LLMProvider(platform)
     response = llm.generate_response(system_prompt, user_prompt)
     
-    price = price_calculate(input_text, response)
+    price = price_calculate(platform,input_text, response)
 
     return {
         "detected_language": response.strip(),
@@ -73,7 +62,8 @@ def create_voice_to_voice_prediction(
         raise ValueError("Unsupported model. Use 'openvoice' or 'xtts-v2'.")
 
     # Detect and map language
-    detected_language = analyze_prompt_language_detect(input_text, platform)
+    detected_language_info = analyze_prompt_language_detect(input_text, platform)
+    detected_language = detected_language_info["detected_language"]
     mapped_language = map_language_for_model(model_name, detected_language)
 
     input_payload = {
@@ -109,4 +99,8 @@ def create_voice_to_voice_prediction(
     if prediction.get("status") != "success":
         raise Exception(f"Prediction failed: {prediction}")
 
-    return prediction["predictionID"]
+    return {
+        "prediction_id": prediction["predictionID"],
+        "price": detected_language_info["price"]
+    }
+

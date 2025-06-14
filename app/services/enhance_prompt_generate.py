@@ -5,10 +5,10 @@ from app.services.price_calculate import price_calculate
 
 load_dotenv(override=True)
 
-def enhance_prompt(base_prompt: str, target_model: str, platform: str) -> tuple[str, str]:
+def enhance_prompt(base_prompt: str, target_model: str, platform: str, intend: str) :
     """
     Enhances the base prompt specifically tailored for the target_model using the chosen platform.
-    Returns a tuple of (price, enhanced_prompt).
+    Returns an EnhanceResponse containing enhanced prompt and price.
     """
     enhancement_prompt = f"""
     Take the following base prompt and enhance it specifically for the {target_model} model.
@@ -19,27 +19,36 @@ def enhance_prompt(base_prompt: str, target_model: str, platform: str) -> tuple[
     - Content creation (e.g., text, articles, or stories)
     - Audio or music creation
     - Code generation
-    
+
     Base prompt: "{base_prompt}"
-    
+
     Please respond with ONLY the enhanced prompt, no additional commentary or explanation.
     """
-    
     try:
         llm = LLMProvider(platform)
-        enhanced = llm.generate_response(system_prompt="", user_prompt=enhancement_prompt)
-        
-        # Clean output if necessary
-        enhanced = enhanced.replace('\\', '').strip('"').strip()
-        
-        # Calculate price based on base prompt and enhanced prompt
-        price = price_calculate(base_prompt, enhanced)
+        enhanced_prompt = llm.generate_response(system_prompt="", user_prompt=enhancement_prompt)
+        enhanced = enhanced_prompt.replace('\\', '').strip('"').strip()
+        price = price_calculate(platform, base_prompt, enhanced)
+        print (f"Enhanced prompt: {enhanced}")
+        print(f" Price: {price}")
         
         return {
-            "response": enhanced,
-            "price": price
+            "prompt": base_prompt,
+            "enhanced_prompt": enhanced,
+            "model_name":target_model,
+            "price": price,
+            "intend":intend
         }
-    
+
+        
     except Exception as e:
         print(f"[{platform}] Error enhancing prompt: {e}")
-        return 0.0, base_prompt
+        
+        return {
+            "prompt": base_prompt,
+            "enhanced_prompt": enhanced,
+            "model_name":target_model,
+            "price": 0.0,
+            "intend":intend
+        }
+        

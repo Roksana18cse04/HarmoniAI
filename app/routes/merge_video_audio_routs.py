@@ -40,12 +40,12 @@ async def merge_audio_video_route(audio_file: UploadFile = File(...), video_file
         os.remove(audio_path)
         os.remove(video_path)
         os.remove(output_video_path)
+   
 
         return {
             "message": "Audio and video merged successfully",
             "base_audio_url": audio_r2_url,
             "base_video_url": video_r2_url,
-            "output_video_path": output_path,
             "output_video_url": output_video_r2_url
         }
 

@@ -7,7 +7,11 @@ from app.services.image_style_convert import image_style_and_color_change
 from app.services.baby_face_generate import baby_face
 from app.services.background_remove import background_remove
 from app.services.blackwhite_to_color_image import draw_image_color
+from app.services.dress_trail import dress_trial
 from app.services.image_merge import image_merge
+from app.agents.chaining_agent import fetch_models
+from app.services.fetch_models_info import fetch_models_info
+from app.agents.classifier_agent import classify_prompt_agent
 
 
 # Load environment and OpenAI client
@@ -69,6 +73,17 @@ Only return one matching style_slug if applicable. If not applicable, return Non
 
     return response.choices[0].message.content.strip().lower()
 
+MODEL_NAME_MAP = {
+    "face_swap": "face-swap-new",
+    "style_change": "bytedance",
+    "style_convert": "multi-image-kontext",
+    "background_remove": "eachlabs-bg-remover-v1",
+    "color_adjustment": "sdxl-controlnet",
+    "baby_face": "each-baby",
+    "merge_image": "eachlabs-couple",
+    "dress_trail": "idm-vton"
+}
+
 # --- Central routing handler ---
 def call_function_by_style(style, gender, style_slug, prompt, image_urls: list[str]):
     print(image_urls[0])
@@ -80,7 +95,7 @@ def call_function_by_style(style, gender, style_slug, prompt, image_urls: list[s
         "color_adjustment": lambda: draw_image_color(image_urls[0], prompt),
         "baby_face": lambda: baby_face(image_urls[0], gender, image_urls[1]),
         "merge_image": lambda: image_merge(image_urls[0], image_urls[1], prompt),
-        "dress_trail": lambda: "Dress trail effect not yet implemented.",
+        "dress_trail": lambda: dress_trial(style_slug,image_urls[0],image_urls[2],image_urls[3]),
         "other": lambda: f"Custom or undefined edit type: {prompt}"
     }
     return category_handlers.get(style, lambda: "Unsupported category.")()
@@ -102,11 +117,27 @@ def image_to_image_process(prompt: str, image_urls: list[str]):
     print(f"Parsed -> style: {style}, style_slug: {style_slug}, gender: {gender}")
     
     if not style:
-        return "Unsupported category."
-    
-    return call_function_by_style(style, gender, style_slug, prompt, image_urls)
+        return {"result": "Unsupported category.", "price": 0.0}
 
+    # 🔥 Get model name and price
+    model_name = MODEL_NAME_MAP.get(style)
+    models_info = fetch_models_info()
+    categories_list = models_info["result"]["result"]["categories"]
+    model_category = classify_prompt_agent(prompt, categories_list)
     
+    matched_models = fetch_models(prompt, models_info, model_category)
+    matched_model = next((m for m in matched_models if m["name"] == model_name), None)
+    
+    price = matched_model["price"] if matched_model else 0.0
+
+    # 🔄 Call the actual image edit function
+    result = call_function_by_style(style, gender, style_slug, prompt, image_urls)
+
+    return {
+        "result": result,
+        "price": price
+    }
+
 if __name__ == "__main__":
     prompt = "image colorizations  of blue color rose"
     image_urls = [

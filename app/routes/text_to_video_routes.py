@@ -12,7 +12,14 @@ async def generate_video(request: TextToVideoRequest):
     Generate a video from a given prompt using EachLabs API.
     """
     try:
-        video_url = text_to_video_generate(request)
-        return {"video_url": video_url, "intend": TextToVideoRequest.intend}
+        prompt = request.prompt
+        result = text_to_video_generate(request)
+        
+        return {
+            "message": "Video generated successfully",
+            "prompt":prompt,
+            "video_url": result
+            
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Video generation failed: {str(e)}")

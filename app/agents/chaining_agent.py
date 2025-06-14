@@ -19,6 +19,7 @@ def fetch_models(prompt, models_info, model_category):
             'name': model["slug"],
             "thumbnail_url": model["thumbnail_url"],
             "price": model["gpu_device_id"]["price"],
+            "intend":model["category"]["slug"]
         } for model in models_list if model["category"]["id"] == category_id]
     else:
         models = []

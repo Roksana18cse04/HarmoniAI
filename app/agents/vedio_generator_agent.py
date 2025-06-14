@@ -14,11 +14,16 @@ HEADERS = {
 
 def text_to_video_generate(data:TextToVideoRequest):
     prediction_id = create_prediction( data.prompt, data.model_name, data.duration)
+    print(f" =------------------------->Prediction ID: {prediction_id}")
     try:
         video_url = get_prediction(prediction_id)
+        intend = data.intend
         url = video_url.get("output")
         if url:
-            return url
+            return {
+                "video_url": url,
+                "intend": intend      
+            }
         else:
             raise Exception("Video generation failed: No output URL found.")
     except Exception as e:

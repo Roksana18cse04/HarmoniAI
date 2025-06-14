@@ -52,11 +52,12 @@ class LLMProvider:
             "max_tokens": 500,
         }
         response = requests.post(url, headers=headers, json=payload)
+        print(response)
         return response.json()["choices"][0]["message"]["content"]
 
     def _call_google(self, system_prompt, user_prompt):
         print("call google")
-        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent"
+        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-preview-05-06:generateContent"
         headers = {"Content-Type": "application/json"}
         params = {"key": os.getenv("GEMINI_API_KEY")}
         payload = {

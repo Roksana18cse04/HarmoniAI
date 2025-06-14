@@ -3,12 +3,13 @@ import time
 import os
 import random
 import json
-from openai import OpenAI
 from dotenv import load_dotenv
 import re
 from app.services._get_prediction import get_prediction
 from app.services.llm_provider import LLMProvider
 from app.services.price_calculate import price_calculate
+from app.schemas.TextToAudio import TextToAudioRequest
+
 
 
 # Load environment variables
@@ -102,14 +103,14 @@ def analyze_prompt(prompt: str, platform: str) -> dict:
         }
 
 
-def create_prediction(user_prompt,platform:str):
+def create_prediction(request:TextToAudioRequest):
     """
     Creates the prediction request payload based on model and user inputs.
     """
-    analysis_result = analyze_prompt(user_prompt,platform)
+    analysis_result = analyze_prompt(request.prompt,request.platform)
     voice_type = analysis_result.get('voicetype', 'male').lower()  # Default to 'male' if not provided
     language = analysis_result.get('language', 'english')
-    audio_prompt = analysis_result.get('audio-prompt', user_prompt)
+    audio_prompt = analysis_result.get('audio-prompt', request.prompt)
 
     # Retrieve the voice_id from the VOICE_DATABASE
     voice_id = None
@@ -122,7 +123,7 @@ def create_prediction(user_prompt,platform:str):
         voice_id = random.choice(list(VOICE_DATABASE["male"].values()))
 
     payload = {
-        "model": "eleven-multilingual-v2",
+        "model": request.model_name or "eleven-multilingual-v2",
         "version": "0.0.1",
         "input": {
             "use_speaker_boost": False,
@@ -146,12 +147,12 @@ def create_prediction(user_prompt,platform:str):
         raise Exception(f"Prediction failed: {prediction}")
     return prediction["predictionID"]
 
-def text_to_audio_generate(user_prompt :str,platform:str):
+def text_to_audio_generate(request:TextToAudioRequest):
     """
     Generates audio based on the selected model and text.
     """
     try:
-        prediction_id = create_prediction(user_prompt)
+        prediction_id = create_prediction(request)
         print(f"Prediction ID: {prediction_id}")  # Debugging line
 
         audio_result = get_prediction(prediction_id)
@@ -160,8 +161,10 @@ def text_to_audio_generate(user_prompt :str,platform:str):
         if url:
             print(f"Audio generated successfully: {url}")
             return {
-                "platform": platform,
-                "audio": url               
+                "prompt": request.prompt,
+                "platform": request.platform,
+                "audio": url ,
+                "intend":request.intend              
             }
         else:
             raise Exception("Audio generation failed: No output URL found.")

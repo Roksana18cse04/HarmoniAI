@@ -11,5 +11,5 @@ async def image_generate(data: TextToImageRequest):
     Classify the given prompt into one of the predefined categories.
     """
     result = text_to_generate_image(data)
-    return {"result": result, "intend": TextToImageRequest.intend}
+    return result
 
