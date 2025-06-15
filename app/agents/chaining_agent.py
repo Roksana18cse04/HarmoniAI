@@ -5,7 +5,6 @@ from app.agents.content_creator_agent import generate_content_from_instruction
 from app.agents.shopping_agent import shopping_agent  
 from app.agents.media_agent import media_agent
 from app.agents.qa_agent import question_answer_agent 
-from app.services.correct_symspell import correct_spelling
 from typing import Optional
 from fastapi import UploadFile
 
@@ -26,9 +25,8 @@ def fetch_models(prompt, models_info, model_category):
     print("models:------------------", models)      
     return models
 
-def run_multi_agent_chain(platform, prompt, file:Optional[UploadFile] = None):
+def run_multi_agent_chain( platform, prompt, full_prompt, file:Optional[UploadFile] = None):
     # correct prompt spelling 
-    prompt= correct_spelling(prompt)
 
     # fetch all models info from eachlabs
     models_info=fetch_models_info()
@@ -54,27 +52,27 @@ def run_multi_agent_chain(platform, prompt, file:Optional[UploadFile] = None):
     if model_category["intent"]=="unknown":
         return {
             "result": "Sorry, I can't help with that.",
-            "intent": "unknown"
+            "intend": "unknown"
         }
     elif model_category["intent"]=="shopping":
         # if the category is shopping, use the shopping agent to get product info
         shopping_result = shopping_agent(prompt)
         return {
             "result": shopping_result,
-            "intent": "shopping"
+            "intend": "shopping"
         }
     elif model_category["intent"]=="media-recommendation":
         response = media_agent(prompt) 
         return {
             "result": response,
-            "intent": "media-recommendation"
+            "intend": "media-recommendation"
         }     
     elif model_category["intent"]=="question-answering":
-        response= question_answer_agent(prompt)
+        response= question_answer_agent(platform, prompt, full_prompt)
         print("result------", response)
         return {
             "result": response,
-            "intent": "question-answering"
+            "intend": "question-answering"
         }
     elif model_category['intent']=="caption-create":
         # Use the file if provided and valid, otherwise pass None
@@ -84,13 +82,13 @@ def run_multi_agent_chain(platform, prompt, file:Optional[UploadFile] = None):
         caption_text = caption_generator(file, prompt)   
         return {
             "result": caption_text,
-            "intent": "caption-generate"
+            "intend": "caption-generate"
         }  
     elif model_category['intent'] == 'content-create':
         response = generate_content_from_instruction(prompt, platform)
         return {
             "result": response,
-            "intent": "content-generate"
+            "intend": "content-generate"
         }
     else:
         # fetch models based on the classified category
@@ -100,4 +98,7 @@ def run_multi_agent_chain(platform, prompt, file:Optional[UploadFile] = None):
                 "models": [],
                 "message": "Currently, model is not available"
             }
-        return models
+        return {
+            "models": models,
+            "intend": model_category['intent']
+        }

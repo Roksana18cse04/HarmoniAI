@@ -121,7 +121,6 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
     except json.JSONDecodeError:
         return {
             "intend": None,
-            "intend": None,
             "category_id": None,
             "error": "Failed to parse LLM response"
         }
