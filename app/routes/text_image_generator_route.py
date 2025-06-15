@@ -12,4 +12,3 @@ async def image_generate(data: TextToImageRequest):
     """
     result = text_to_generate_image(data)
     return result
-

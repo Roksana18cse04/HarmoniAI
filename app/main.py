@@ -17,6 +17,7 @@ from app.routes.pdf_extract_routes import router as pdf_extract_router
 from app.routes.text_to_video_routes import router as text_to_video_router
 import uvicorn
 import os
+from app.mcp_server import mcp_server 
 
 from app.services.weaviate_client import client
 
@@ -58,7 +59,8 @@ app.include_router(text_to_video_router,prefix = "/text-to-video",tags =["text-t
 app.include_router(merge_video_audio_router,prefix="/merge-audio-video",tags=["merge-audio-video"])
 
 app.include_router(content_creator_router, prefix="/content-creator", tags=["content-create"])
-
+# Mount MCP endpoint
+app.include_router(mcp_server.router, prefix="/mcp")
 
 
 
