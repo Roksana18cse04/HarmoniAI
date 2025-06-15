@@ -10,7 +10,7 @@ def count_tokens(text: str, model):
     except TypeError:
         raise ValueError(f"Invalid input to tokenizer: {text} (type {type(text)})")
 
-def price_calculate(platform: str, prompt: str, completion: str):
+def price_calculate(platform: str, prompt: str, response: str):
     platform = platform.lower()
 
     # get pricing
@@ -34,7 +34,11 @@ def price_calculate(platform: str, prompt: str, completion: str):
         raise ValueError(f"Unsupported platform: {platform}")
 
     input_tokens = count_tokens(prompt, model)
-    output_tokens = count_tokens(completion, model)
+    output_tokens = count_tokens(response, model)
 
     total_cost = input_tokens * input_price + output_tokens * output_price
-    return round(total_cost, 6)
+    return {
+        "price": round(total_cost, 6),
+        "input_token": input_tokens,
+        "output_token": output_tokens
+    }

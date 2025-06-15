@@ -29,7 +29,9 @@ Your job is to:
     price = price_calculate(platform, instruction, response)
     return {
         "response": response,
-        "price": price
+        "price": price['price'],
+        "input_token": price['input_token'],
+        "output_token": price['output_token']
     }
 
 

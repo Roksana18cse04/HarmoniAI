@@ -1,13 +1,14 @@
 # qa_agent.py
 import os
-from openai import OpenAI
 from serpapi import GoogleSearch
 from dotenv import load_dotenv
 import trafilatura
+from app.services.llm_provider import LLMProvider
+from app.services.price_calculate import price_calculate
+import requests
 
 load_dotenv()
-
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+from bs4 import BeautifulSoup
 
 def is_current_event(prompt: str) -> bool:
     keywords = ["today", "now", "latest", "current", "trending", "news"]
@@ -22,50 +23,73 @@ def search_web_urls(prompt: str, limit: int = 3) -> list:
     return [item["link"] for item in results.get("organic_results", [])[:limit]]
 
 def extract_content_from_url(url: str) -> str:
+    
     downloaded = trafilatura.fetch_url(url)
     if downloaded:
         return trafilatura.extract(downloaded)
     return ""
 
-def summarize_content(content: str, original_prompt: str) -> str:
-    messages = [
-        {"role": "system", "content": """You are a helpful assistant that reads web content and answers questions based on it. When providing temperature, adapt to the user's country if known: 
-- For the US and similar countries, provide Fahrenheit primarily with Celsius in parentheses.
-- For other countries, provide Celsius primarily with Fahrenheit in parentheses.
-- If the user's location is unknown, provide both units equally, e.g. '20°C (68°F)'.
-        """},
-        {"role": "user", "content": f"Based on the following article, answer this user query: '{original_prompt}'\n\nArticle:\n{content}"}
-    ]
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=messages,
-        temperature=0.7
-    )
-    return response.choices[0].message.content.strip()
+def summarize_content(platform, content: str, original_prompt: str) -> str:
+    system_prompt = """
+You are a helpful assistant that reads and understands web content, and answers user questions accurately based only on the information found in the provided article.
 
-def gpt_answer(prompt: str) -> str:
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant who answers questions clearly and factually.If the user mentions a specific domain (e.g., AI, medicine, law), prefer answering in that domain."},
-            {"role": "user", "content": prompt} 
-            
-        ]
-    )
-    return response.choices[0].message.content.strip()
+Your responsibilities:
+- Extract factual answers from the article with clarity and precision.
+- If the article includes a specific date or day (e.g. today’s date), extract and use that when answering related questions.
+- If a date is not mentioned and the question depends on it, state clearly that the information is not present.
+- If the content includes temperature, adapt it based on the user's country if known:
+    - Use Fahrenheit primarily with Celsius in parentheses for users in the US and similar countries.
+    - Use Celsius primarily with Fahrenheit in parentheses for other regions.
+    - If the user's location is unknown, provide both units equally (e.g., 20°C (68°F)).
+- If the content includes names, places, stats, or breaking news, report them exactly as found in the article.
+- Do not invent facts or make assumptions beyond what the content states.
+- If the article is incomplete, ambiguous, or lacks detail, let the user know.
 
-# Main agent function
-def question_answer_agent(prompt: str) -> str:
+Be concise, informative, and neutral. Only answer based on what the article explicitly says.
+"""
+
+    user_prompt = f"Based on the following article, answer this user query: '{original_prompt}'\n\nArticle:\n{content}"
+    llm = LLMProvider(platform)
+    return llm.generate_response(system_prompt, user_prompt)
+
+def llm_answer(platform, prompt: str) -> str:
+    system_prompt = "You are a helpful assistant who answers questions clearly and factually. If the user mentions a specific domain (e.g., AI, medicine, law), prefer answering in that domain."
+    llm = LLMProvider(platform)
+    response = llm.generate_response(system_prompt, prompt)
+    return response
+
+def question_answer_agent(platform: str, prompt: str, full_prompt) -> str:  
+    # get history message
+
+    # Step 3: Check for current event
     if is_current_event(prompt):
         urls = search_web_urls(prompt)
         print("response urls:----", urls)
         for url in urls:
             content = extract_content_from_url(url)
-            if content and len(content) > 500:  # skip short or empty articles
+            print(content)
+            if content and len(content) > 500:
                 try:
-                    return summarize_content(content, prompt)
+                    response = summarize_content(platform, content, prompt)
+                    price = price_calculate(platform, prompt, response)
+                    return {
+                        "response": response,
+                        "price": price['price'],
+                        "input_token": price['input_token'],
+                        "output_token": price['output_token']
+                    }
                 except Exception as e:
-                    continue  # fallback to next URL if any issue
+                    continue
         return "Sorry, I couldn’t extract enough useful content to answer your question."
+    
+    # Step 4: Answer using full context
     else:
-        return gpt_answer(prompt)
+        response = llm_answer(platform, full_prompt)
+        price = price_calculate(platform, prompt, response)
+        return {
+            "response": response,
+            "price": price['price'],
+            "input_token": price['input_token'],
+            "output_token": price['output_token']
+        }
+    
