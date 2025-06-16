@@ -52,7 +52,7 @@ async def execute_prompt(
     prompt= correct_spelling(prompt)
     platform, full_prompt= get_history(chat_id, prompt)        
     
-    result = run_multi_agent_chain(platform, prompt, full_prompt, processed_file)
+    result = await run_multi_agent_chain(platform, prompt, full_prompt, processed_file)
     return {"result": result}
     
     

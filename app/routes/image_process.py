@@ -25,7 +25,7 @@ async def process_images(
             return {"error": f"Failed to upload image at index {idx}: {str(e)}"}
 
     try:
-        result = image_to_image_process(prompt, uploaded_image_urls)
+        result = await image_to_image_process(prompt, uploaded_image_urls)
         return {
             "prompt": prompt,
             "input_images": {f"image_{i}": url for i, url in enumerate(uploaded_image_urls)},
