@@ -1,5 +1,6 @@
 from openai import OpenAI
-from app.services.price_calculate import count_tokens
+from app.services.price_calculate import price_calculate
+from app.services.llm_provider import LLMProvider
 import base64
 from typing import Optional
 from app.config import config
@@ -11,7 +12,7 @@ load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def generate_caption_from_instruction(instruction: str, image_path: Optional[str] = None):
+def generate_caption_from_instruction(platform, instruction: str, image_path: Optional[str] = None):
     system_prompt = """
 You are a smart caption creation assistant. A user will give you either:
 - A free-form instruction describing what kind of content they want to post (e.g., "write a LinkedIn post")
@@ -34,28 +35,31 @@ Your job is to:
         image_url = f"data:image/jpeg;base64,{encoded_image}"
         user_content.append({"type": "image_url", "image_url": {"url": image_url}})
 
-    response = client.chat.completions.create(
-        model="gpt-4-turbo",
-        messages=[
-            {"role": "system", "content": system_prompt.strip()},
-            {"role": "user", "content": user_content if image_path else instruction}
-        ],
-        max_tokens=500,
-        temperature=0.7
-    )
+    # response = client.chat.completions.create(
+    #     model="gpt-4-turbo",
+    #     messages=[
+    #         {"role": "system", "content": system_prompt.strip()},
+    #         {"role": "user", "content": user_content if image_path else instruction}
+    #     ],
+    #     max_tokens=500,
+    #     temperature=0.7
+    # )
 
-    result_content = response.choices[0].message.content.strip()
-    input_token = count_tokens(instruction)
-    output_token = count_tokens(result_content)
-    
+    # result_content = response.choices[0].message.content.strip()
+    system_prompt= system_prompt.strip()
+    user_prompt = user_content if image_path else instruction
+    llm = LLMProvider(platform)
+    response = llm.generate_response(system_prompt, user_prompt)
+    price = price_calculate(platform, user_prompt, response)
     return {
-        "response": result_content,
-        "input_token": input_token,
-        "output_token": output_token
+        "response": response,
+        "price": price['price'], 
+        "input_token": price['input_token'],
+        "output_token": price['output_token']
     }
 
 
-def caption_generator(file: UploadFile, instruction):
+def caption_generator(platform, file: UploadFile, instruction):
     image_path = None
 
     if file:
@@ -65,7 +69,7 @@ def caption_generator(file: UploadFile, instruction):
             shutil.copyfileobj(file.file, buffer)
 
     try:
-        return generate_caption_from_instruction(instruction, image_path)
+        return generate_caption_from_instruction(platform, instruction, image_path)
     finally:
         if image_path and os.path.exists(image_path):
             os.remove(image_path)

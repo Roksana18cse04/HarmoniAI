@@ -8,7 +8,7 @@ router = APIRouter()
 
 def get_history(chatId, prompt):
     api_url = f"https://harmoniai-backend.onrender.com/api/v1/conversations/{chatId}"
-    token= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODRhNzZiMzM3MjEzYzA0ODExNjQ0MmQiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NDk5NTY2MDMsImV4cCI6MTgzNjM1NjYwM30.VKikx2Um2nP2aksRtfzZnfmzvoD-ZCKisWM6jOYGSOw"
+    token= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODRhNzZiMzM3MjEzYzA0ODExNjQ0MmQiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTAwNDI3MzksImV4cCI6MTgzNjQ0MjczOX0.23FDVEKnEE3bvgD-CRjvV1apGuqNtsZnecCbf3g9uA4"
     headers= {
         "Authorization": token
     }

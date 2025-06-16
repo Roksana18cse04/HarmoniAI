@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 # from app.services.xml_to_faiss import query_products  # Your existing XML parser
 from app.services.product_weaviate import query_weaviate_products
+from app.services.price_calculate import price_calculate
 import json
 
 load_dotenv()
@@ -10,7 +11,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 # === SHOPPING AGENT ===
-def shopping_agent(user_prompt):
+def shopping_agent(platform, user_prompt):
     relevant_products = query_weaviate_products(user_prompt, top_k=10)
 
     print("relevant products -----------", relevant_products)
@@ -55,9 +56,16 @@ Example output format:
         messages=[{"role": "user", "content": prompt}],
         temperature=0.3,
     )
-
     try:
-        return json.loads(response.choices[0].message.content)
+        response_text = json.loads( response.choices[0].message.content )
+        price =  price_calculate("chatgpt", user_prompt, response_text)
+        return {
+            "response": response_text,
+            "price": price['price'],
+            "input_token": price['input_token'],
+            "output_token": price['output_token']
+        }
+
     except json.JSONDecodeError:
         print("Failed to parse JSON. Raw response:")
         print(response.choices[0].message.content)

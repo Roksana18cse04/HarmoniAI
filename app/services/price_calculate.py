@@ -1,5 +1,6 @@
 import tiktoken
 import requests
+import json
 
 def count_tokens(text: str, model):
     try:
@@ -32,7 +33,10 @@ def price_calculate(platform: str, prompt: str, response: str):
         model = 'gemini-1.5-pro'
     else:
         raise ValueError(f"Unsupported platform: {platform}")
-
+    
+    if not isinstance(response, str):
+        response = json.dumps(response)
+        
     input_tokens = count_tokens(prompt, model)
     output_tokens = count_tokens(response, model)
 
