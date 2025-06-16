@@ -1,14 +1,16 @@
 from openai import OpenAI
+from app.services.llm_provider import LLMProvider
 import os
 from dotenv import load_dotenv
 import json
+import re
 
 load_dotenv()
 
 # Initialize OpenAI or use your preferred LLM provider
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
+def classify_prompt_agent(platform, prompt: str, categories_list: list) -> dict:
     # Prepare categories list in the format needed for the system prompt
     formatted_categories = [
         {
@@ -31,7 +33,6 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
         {"prompt": "Describe the contents of this image", "intent": "image-to-text"},
         {"prompt": "Turn this sketch into a realistic image", "intent": "image-to-image"},
         {"prompt": "Animate this image into a short video", "intent": "image-to-video"},
-        {"prompt": "Rewrite this paragraph in simpler terms", "intent": "text-to-text"},
         {"prompt": "Create a landscape from a text description", "intent": "text-to-image"},
         {"prompt": "Turn this script into spoken dialogue", "intent": "text-to-voice"},
         {"prompt": "Make a video from a story prompt", "intent": "text-to-video"},
@@ -100,24 +101,34 @@ def classify_prompt_agent(prompt: str, categories_list: list) -> dict:
         "\nHere are some example prompts and their intents:\n"
         f"{example_prompt}\n"
         f"\nCategories:\n{json.dumps(formatted_categories, indent=2)}\n"
-        "\nRespond ONLY in this JSON format:\n"
+        "⚠️ Do NOT use generic labels like 'text-to-text', 'text-generation', 'creative writing', or similar.\n"
+        "Use only one of the intent slugs shown in the examples.\n"
+        "Always return this exact JSON format:\n"
         "{\n  \"intent\": \"slug\",\n  \"category_id\": number\n}"
         "You support multilingual prompts (e.g., English, Turkish, Spanish, French, Arabic, etc.)."
     )
     # Send prompt to OpenAI
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.3
-    )
+    # response = client.chat.completions.create(
+    #     model="gpt-4",
+    #     messages=[
+    #         {"role": "system", "content": system_prompt},
+    #         {"role": "user", "content": prompt}
+    #     ],
+    #     temperature=0.3
+    # )
     # Parse and return LLM response
+
+    llm = LLMProvider(platform)
+    response = llm.generate_response(system_prompt, prompt)
+    
     try:
-        result_json = json.loads(response.choices[0].message.content.strip())
-        print("prompt classifier result:------------------", result_json)
-        return result_json
+        # result_json = json.loads(response.choices[0].message.content.strip())
+        # Strip markdown
+        match = re.search(r'{.*}', response, re.DOTALL)
+        if match:
+            response = json.loads(match.group())
+
+        return response
     except json.JSONDecodeError:
         return {
             "intend": None,

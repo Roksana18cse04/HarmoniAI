@@ -52,7 +52,6 @@ class LLMProvider:
             "max_tokens": 500,
         }
         response = requests.post(url, headers=headers, json=payload)
-        print(response)
         return response.json()["choices"][0]["message"]["content"]
 
     def _call_google(self, system_prompt, user_prompt):

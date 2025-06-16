@@ -26,6 +26,7 @@ def fetch_models(prompt, models_info, model_category):
     return models
 
 def run_multi_agent_chain( platform, prompt, full_prompt, file:Optional[UploadFile] = None):
+    print("platform---------------", platform)
     # correct prompt spelling 
 
     # fetch all models info from eachlabs
@@ -34,18 +35,49 @@ def run_multi_agent_chain( platform, prompt, full_prompt, file:Optional[UploadFi
     # load all categories from models info
     categories_list = models_info["result"]["result"]["categories"]
     # Inject custom category
-    categories_list.append({
+    categories_list.extend([{
         "id": 9999,  # Use a high unused ID to avoid collisions
         "name": "Question Answering",
         "slug": "question-answering",
         "count": 1
         
-    })
+    },
+    {
+        'id': 10001,
+        'name': 'Caption Create',
+        'slug': 'caption-create',
+        'count': 1
+    },
+    {
+       'id': 10002,
+        'name': 'Content Create',
+        'slug': 'content-create',
+        'count': 1 
+    },
+    {
+        'id': 10003,
+        'name': 'Shopping',
+        'slug': 'shopping',
+        'count': 1
+    },
+    {
+        'id': 10004,
+        'name': 'Media Recommendation',
+        'slug': 'media-recommendation',
+        'count': 1
+    },
+    {
+        'id': 10005,
+        'name': 'Unknown',
+        'slug': 'unknown',
+        'count': 1
+    }
+    ])
 
     print("categories list:------------------", categories_list)
 
     # classify the prompt using the models categories
-    model_category = classify_prompt_agent(prompt, categories_list)
+    model_category = classify_prompt_agent(platform, prompt, categories_list)
     print("model_category:------------------", model_category)
 
     print("model_category['intent']:------------------", model_category["intent"])
@@ -56,13 +88,13 @@ def run_multi_agent_chain( platform, prompt, full_prompt, file:Optional[UploadFi
         }
     elif model_category["intent"]=="shopping":
         # if the category is shopping, use the shopping agent to get product info
-        shopping_result = shopping_agent(prompt)
+        shopping_result = shopping_agent(platform, prompt)
         return {
             "result": shopping_result,
             "intend": "shopping"
         }
     elif model_category["intent"]=="media-recommendation":
-        response = media_agent(prompt) 
+        response = media_agent(platform, prompt) 
         return {
             "result": response,
             "intend": "media-recommendation"
@@ -79,10 +111,10 @@ def run_multi_agent_chain( platform, prompt, full_prompt, file:Optional[UploadFi
         if file is not None and (not hasattr(file, 'filename') or not file.filename):
             file = None
         # Run caption generation (prompt-only or image+prompt)
-        caption_text = caption_generator(file, prompt)   
+        caption_text = caption_generator(platform, file, prompt)   
         return {
             "result": caption_text,
-            "intend": "caption-generate"
+            "intend": "caption-create"
         }  
     elif model_category['intent'] == 'content-create':
         response = generate_content_from_instruction(prompt, platform)

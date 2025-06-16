@@ -1,10 +1,6 @@
 # app/config.py
 import os
 
-
-
-
-
 # Set up directories
 AUDIO_DIR = "app/data/audio"
 VIDEO_DIR = "app/data/video"
