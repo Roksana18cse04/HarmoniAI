@@ -5,6 +5,7 @@ from app.agents.content_creator_agent import generate_content_from_instruction
 from app.agents.shopping_agent import shopping_agent  
 from app.agents.media_agent import media_agent
 from app.agents.qa_agent import question_answer_agent 
+from app.agents.chatting_agent import generate_chat_msg
 from typing import Optional
 from fastapi import UploadFile
 
@@ -68,6 +69,12 @@ def run_multi_agent_chain( platform, prompt, full_prompt, file:Optional[UploadFi
     },
     {
         'id': 10005,
+        'name': 'Chat',
+        'slug': 'chat',
+        'count': 1
+    },
+    {
+        'id': 10006,
         'name': 'Unknown',
         'slug': 'unknown',
         'count': 1
@@ -121,6 +128,12 @@ def run_multi_agent_chain( platform, prompt, full_prompt, file:Optional[UploadFi
         return {
             "result": response,
             "intend": "content-generate"
+        }
+    elif model_category['intent'] == 'chat':
+        response = generate_chat_msg(platform, prompt, full_prompt)
+        return {
+            "result": response,
+            "intend": "chatting"
         }
     else:
         # fetch models based on the classified category

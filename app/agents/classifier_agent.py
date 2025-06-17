@@ -77,11 +77,24 @@ def classify_prompt_agent(platform, prompt: str, categories_list: list) -> dict:
         {"prompt": "Write LinkedIn content for a marketing manager announcing a promotion", "intent": "content-create"},
         {"prompt": "Draft a newsletter for our spring sale campaign", "intent": "content-create"},
 
+        # Caption creation
         {"prompt": "Create a caption for a dog wearing sunglasses", "intent": "caption-create"},
         {"prompt": "Write a short and witty caption for a coffee photo", "intent": "caption-create"},
         {"prompt": "Caption this birthday celebration image", "intent": "caption-create"},
         {"prompt": "Suggest a funny caption for a cat video", "intent": "caption-create"},
-        {"prompt": "Give me a caption for a fitness transformation post", "intent": "caption-create"}
+        {"prompt": "Give me a caption for a fitness transformation post", "intent": "caption-create"},
+
+        # ----------- NEW: Chat / Conversational Intent -----------
+        {"prompt": "hello, how are you?", "intent": "chat"},
+        {"prompt": "What’s up?", "intent": "chat"},
+        {"prompt": "Can you tell me a joke?", "intent": "chat"},
+        {"prompt": "How’s the weather today?", "intent": "chat"},
+        {"prompt": "What do you think about AI?", "intent": "chat"},
+        {"prompt": "Tell me something interesting.", "intent": "chat"},
+        {"prompt": "Can we chat for a bit?", "intent": "chat"},
+        {"prompt": "I’m feeling bored, chat with me.", "intent": "chat"},
+        {"prompt": "Do you like music?", "intent": "chat"},
+        {"prompt": "How was your day?", "intent": "chat"},
 
 
 

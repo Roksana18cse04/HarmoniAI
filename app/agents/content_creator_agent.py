@@ -8,7 +8,7 @@ load_dotenv()
 
 client= OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def generate_content_from_instruction(instruction,platform:str):
+def generate_content_from_instruction(instruction,platform):
     system_prompt = """
 You are a smart content creation assistant. A user will give you a free-form instruction describing what kind of content they want to post (e.g., "write a LinkedIn post about joining a new company", "write a tweet about AI", etc).
 
