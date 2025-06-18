@@ -36,6 +36,7 @@ def create_prediction(prompt: str,model_name : str) -> str:
             }   
         }
     )
+    print(response)
     response.raise_for_status()
     prediction = response.json()
     if prediction["status"] != "success":
