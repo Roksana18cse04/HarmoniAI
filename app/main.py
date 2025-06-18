@@ -3,7 +3,6 @@ from app.services.media_content import fetch_all_media
 from app.services.product_weaviate import fetch_and_index_all_products
 from app.services.create_schema import setup_schema
 from app.routes.execute_prompt_router import router as models_selector_router
-from app.routes.content_generator_route import router as content_creator_router
 from app.routes.text_image_generator_route import router as image_generator_router
 from app.routes.image_to_video_routes import router as image_to_video_with_audio
 from app.routes.prompt_enhance_routes import enhance_router as enhance_prompt_router
