@@ -23,9 +23,12 @@ def text_to_generate_image(image_request: TextToImageRequest) -> dict:
     Returns:
         dict: A dictionary containing the prompt and the generated image URL, or None if the generation failed.
     """
+    prompt = image_request.prompt
+    model_name = image_request.model_name
+    intend = getattr(image_request.intend, "intend", None)
     try:
         # Create prediction and get prediction ID
-        prediction_id = create_prediction(image_request.prompt, image_request.model_name)
+        prediction_id = create_prediction(prompt,model_name)
         
         # Get the image URL
         result = get_prediction(prediction_id)
