@@ -23,33 +23,29 @@ def text_to_generate_image(image_request: TextToImageRequest) -> dict:
     Returns:
         dict: A dictionary containing the prompt and the generated image URL, or None if the generation failed.
     """
-
     prompt = image_request.prompt
     model_name = image_request.model_name
     intend = getattr(image_request.intend, "intend", None)
-
     try:
         # Create prediction and get prediction ID
-        prediction_id = create_prediction(prompt,model_name)
-        print("prediction_id", prediction_id)
+        response = create_prediction(prompt,model_name)
+        prediction_id = response['pred_id']
+        
         # Get the image URL
         result = get_prediction(prediction_id)
         image_url=result['output']
         intend = image_request.intend
 
-        # If an image URL was returned, return the prompt and the image URL
         if image_url:
-            return {"prompt": image_request.prompt, "image_url": image_url, "intend": intend}
-        else:
-            return {"prompt": image_request.prompt, "image_url": None, "intend": intend}
+            return result, response['model_info']
     except Exception as e:
         # Handle any errors during the process
         print(f"Error generating image: {e}")
 
         return {
-            "prompt": image_request.prompt,  
-            "image_url": None,
-            "intend": intend
+            "prompt": image_request.prompt, 
+            "intend": intend, 
+            "image_url": None
         }
 
 
