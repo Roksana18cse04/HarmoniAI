@@ -13,19 +13,7 @@ HEADERS = {
 
 
 def create_prediction(prompt: str,model_name : str) -> str:
-    """
-    Create a prediction request to the Each Labs API.
-
-    Args:
-        prompt (str): The text prompt for image generation.
-
-    Returns:
-        str: The prediction ID.
-    """
-    response = requests.post(
-        "https://api.eachlabs.ai/v1/prediction/",
-        headers=HEADERS,
-        json={
+    payload = {
             "model": model_name,
             "version": "0.0.1",
             "input": {
@@ -33,12 +21,20 @@ def create_prediction(prompt: str,model_name : str) -> str:
                 "aspect_ratio": "1:1",
                 "output_format": "webp",
                 "output_quality": 90,    
-            }   
+            },   
+            "webhook_url": ""
         }
+    response = requests.post(
+        "https://api.eachlabs.ai/v1/prediction/",
+        headers=HEADERS,
+        json=payload
     )
     print(response)
     response.raise_for_status()
     prediction = response.json()
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
-    return prediction["predictionID"]
+    return {
+        "pred_id": prediction["predictionID"],
+        "model_info": payload
+    }

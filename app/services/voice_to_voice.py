@@ -101,6 +101,6 @@ def create_voice_to_voice_prediction(
 
     return {
         "prediction_id": prediction["predictionID"],
-        "price": detected_language_info["price"]
+        "model_info": payload
     }
 
