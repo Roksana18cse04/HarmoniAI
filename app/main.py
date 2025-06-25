@@ -14,6 +14,7 @@ from app.routes.merge_video_audio_routs import router as merge_video_audio_route
 from app.routes.voice_cloning_route import router as voice_cloning_router
 from app.routes.pdf_extract_routes import router as pdf_extract_router
 from app.routes.text_to_video_routes import router as text_to_video_router
+from app.routes.get_eachlabs_models import router as models_list_router
 import uvicorn
 import os
 
@@ -44,6 +45,7 @@ except Exception as e:
 
 app = FastAPI(title="Multi-Agent System")
 
+app.include_router(models_list_router, prefix="/models-list", tags=["get-models-list"])
 app.include_router(models_selector_router, prefix="/models-selector", tags=["prompt-handler"])
 app.include_router(enhance_prompt_router, prefix="/enhance-prompt", tags=["enhance-prompt"])
 app.include_router(image_generator_router, prefix="/image-generator", tags=["text-to-image"])

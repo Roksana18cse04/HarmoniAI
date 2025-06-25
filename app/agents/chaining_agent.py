@@ -8,13 +8,13 @@ from app.agents.qa_agent import question_answer_agent
 from app.agents.chatting_agent import generate_chat_msg
 from typing import Optional
 from fastapi import UploadFile
+import time
 
-def fetch_models(prompt, models_info, model_category):
+def fetch_models(models_info, model_category):
     models_list = models_info["result"]["result"]["models"]
     category_id = model_category["category_id"] 
     if category_id is not None:
         models = [{
-            "prompt": prompt,
             "title": model["title"], 
             'name': model["slug"],
             "thumbnail_url": model["thumbnail_url"],
@@ -27,6 +27,7 @@ def fetch_models(prompt, models_info, model_category):
     return models
 
 def run_multi_agent_chain( platform, prompt, full_prompt, file:Optional[UploadFile] = None):
+    start_time = time.time()
     print("platform---------------", platform)
     # correct prompt spelling 
 
@@ -90,28 +91,48 @@ def run_multi_agent_chain( platform, prompt, full_prompt, file:Optional[UploadFi
     print("model_category['intent']:------------------", model_category["intent"])
     if model_category["intent"]=="unknown":
         return {
-            "result": "Sorry, I can't help with that.",
-            "intend": "unknown"
+            "user_prompt": prompt,
+            "response": "Sorry, I can't help with that.",
+            "model_info": {
+                'model_name': "model"
+            },
+            "intend": "unknown",
+            "runtime": round( time.time()-start_time, 3)
         }
     elif model_category["intent"]=="shopping":
         # if the category is shopping, use the shopping agent to get product info
         shopping_result = shopping_agent(platform, prompt)
         return {
-            "result": shopping_result,
-            "intend": "shopping"
+            "user_prompt": prompt,
+            "response": shopping_result,
+            "model_info": {
+                'model_name': "model"
+            },
+            "intend": "shopping",
+            "runtime": round( time.time()-start_time, 3)
         }
     elif model_category["intent"]=="media-recommendation":
         response = media_agent(platform, prompt) 
         return {
-            "result": response,
-            "intend": "media-recommendation"
+            "user_prompt": prompt,
+            "response": response,
+            "model_info": {
+                'model_name': "model"
+            },
+            "intend": "media-recommendation",
+            "runtime": round( time.time()-start_time, 3)
         }     
     elif model_category["intent"]=="question-answering":
         response= question_answer_agent(platform, prompt, full_prompt)
         print("result------", response)
         return {
-            "result": response,
-            "intend": "question-answering"
+            "user_prompt": prompt,
+            "response": response,
+            "model_info": {
+                'model_name': "model"
+            },
+            "intend": "question-answering",
+            "runtime": round( time.time()-start_time, 3)
         }
     elif model_category['intent']=="caption-create":
         # Use the file if provided and valid, otherwise pass None
@@ -120,30 +141,49 @@ def run_multi_agent_chain( platform, prompt, full_prompt, file:Optional[UploadFi
         # Run caption generation (prompt-only or image+prompt)
         caption_text = caption_generator(platform, file, prompt)   
         return {
-            "result": caption_text,
-            "intend": "caption-create"
+            "user_prompt": prompt,
+            "response": caption_text,
+            "model_info": {
+                'model_name': "model"
+            },
+            "intend": "caption-create",
+            "runtime": round( time.time()-start_time, 3)
         }  
     elif model_category['intent'] == 'content-create':
         response = generate_content_from_instruction(prompt, platform)
         return {
-            "result": response,
-            "intend": "content-generate"
+            "user_prompt": prompt,
+            "response": response,
+            "model_info": {
+                'model_name': "model"
+            },
+            "intend": "content-generate",
+            "runtime": round( time.time()-start_time, 3)
         }
     elif model_category['intent'] == 'chat':
         response = generate_chat_msg(platform, prompt, full_prompt)
         return {
-            "result": response,
-            "intend": "chatting"
+            "user_prompt": prompt,
+            "response": response,
+            "model_info": {
+                'model_name': "model"
+            },
+            "intend": "chatting",
+            "runtime": round( time.time()-start_time, 3)
         }
     else:
         # fetch models based on the classified category
         models= fetch_models(prompt, models_info, model_category)
         if not models:
             return {
+                "user_prompt": prompt,
                 "models": [],
-                "message": "Currently, model is not available"
+                "message": "Currently, model is not available",
+                # "runtime": round( time.time()-start_time, 3)
             }
         return {
+            "user_prompt": prompt,
             "models": models,
-            "intend": model_category['intent']
+            "intend": model_category['intent'],
+            # "runtime": round( time.time()-start_time, 3)
         }

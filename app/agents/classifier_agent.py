@@ -137,7 +137,7 @@ def classify_prompt_agent(platform, prompt: str, categories_list: list) -> dict:
     try:
         # result_json = json.loads(response.choices[0].message.content.strip())
         # Strip markdown
-        match = re.search(r'{.*}', response, re.DOTALL)
+        match = re.search(r'{.*}', response['content'], re.DOTALL)
         if match:
             response = json.loads(match.group())
 
