@@ -1,11 +1,10 @@
 # app/services/llm_provider.py
 
 import os
-import json
-from openai import OpenAI
 import requests
-
+from openai import OpenAI
 from dotenv import load_dotenv
+
 load_dotenv()
 
 class LLMProvider:
@@ -20,20 +19,24 @@ class LLMProvider:
         elif self.provider == "gemini":
             return self._call_google(system_prompt, user_prompt)
         else:
-            raise ValueError(f"Unsupported provider: {self.provider}")
+            return {"status": "error", "content": None, "error": f"Unsupported provider: {self.provider}"}
 
     def _call_openai(self, system_prompt, user_prompt):
-        client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-        response = client.chat.completions.create(
-            model="gpt-4",
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.7,
-            max_tokens=500,
-        )
-        return response.choices[0].message.content.strip()
+        try:
+            client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                temperature=0.7,
+                max_tokens=500,
+            )
+            content = response.choices[0].message.content.strip()
+            return {"status": "success", "content": content}
+        except Exception as e:
+            return {"status": "error", "content": None, "error": str(e)}
 
     def _call_groq(self, system_prompt, user_prompt):
         print("call groq")
@@ -51,8 +54,13 @@ class LLMProvider:
             "temperature": 0.7,
             "max_tokens": 500,
         }
-        response = requests.post(url, headers=headers, json=payload)
-        return response.json()["choices"][0]["message"]["content"]
+        try:
+            response = requests.post(url, headers=headers, json=payload)
+            response.raise_for_status()
+            content = response.json()["choices"][0]["message"]["content"]
+            return {"status": "success", "content": content}
+        except Exception as e:
+            return {"status": "error", "content": None, "error": str(e)}
 
     def _call_google(self, system_prompt, user_prompt):
         print("call google")
@@ -67,7 +75,10 @@ class LLMProvider:
                 ]
             }]
         }
-        response = requests.post(url, headers=headers, params=params, json=payload)
-        return response.json()["candidates"][0]["content"]["parts"][0]["text"]
-
-
+        try:
+            response = requests.post(url, headers=headers, params=params, json=payload)
+            response.raise_for_status()
+            content = response.json()["candidates"][0]["content"]["parts"][0]["text"]
+            return {"status": "success", "content": content}
+        except Exception as e:
+            return {"status": "error", "content": None, "error": str(e)}
