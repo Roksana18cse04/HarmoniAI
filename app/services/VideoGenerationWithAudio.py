@@ -33,5 +33,5 @@ def create_prediction(audio_url:str,image_url:str):
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     
-    return prediction["predictionID"]
+    return prediction["predictionID"], prediction["model_info"]
 

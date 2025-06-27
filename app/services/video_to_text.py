@@ -21,22 +21,26 @@ HEADERS = {
 }
 
 def create_prediction(video_url:str):
-    response = requests.post(
-        "https://api.eachlabs.ai/v1/prediction/",
-        headers=HEADERS,
-        json={
+    playload = {
             "model": "youtube-transcriptor",
             "version": "0.0.1",
             "input": {
-  "url": video_url
-},
+                "url": video_url
+            },
             "webhook_url": ""
         }
+    response = requests.post(
+        "https://api.eachlabs.ai/v1/prediction/",
+        headers=HEADERS,
+        json=playload
     )
     prediction = response.json()
     
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     
-    return prediction["predictionID"]
+    return {
+        "prediction_id": prediction["predictionID"],
+        "model_info": playload
+    }
 

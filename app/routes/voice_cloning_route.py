@@ -27,7 +27,7 @@ async def voice_cloning(
         "response": {
             "status": response['status'],
             "result": response['output'],
-            "price": response['metrics']['cost'],
+            "price":  response['metrics']['cost'],
         },
         "model_info": model_info,
         "intend": "text-to-image",
