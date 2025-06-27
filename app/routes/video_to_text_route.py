@@ -7,12 +7,8 @@ router = APIRouter()
 @router.post("/video_to_text")
 async def video_to_text(video_url: str = Form(...), intend: str = Form(...)):
     try:
-        # video_bytes = await video_file.read()
-        # video_r2_url = upload_to_r2(video_bytes, f"video/{video_file.filename}")
-        # print(f"R2 Video URL: {video_r2_url}")
-
         result, model_info = video_to_text_generate(video_url)
-        print(f"-------------routre-----------------")
+        print(f"-------------routrer-----------------")
         print(f"Generated Text: {result}")
         print(f"Model Info: {model_info}")
         return {
