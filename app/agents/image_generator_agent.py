@@ -33,6 +33,7 @@ def text_to_generate_image(image_request: TextToImageRequest) -> dict:
         
         # Get the image URL
         result = get_prediction(prediction_id)
+        print("result---------------", result)
         image_url=result['output']
         intend = image_request.intend
 
