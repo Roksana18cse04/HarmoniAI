@@ -14,17 +14,8 @@ HEADERS = {
 }
 
 def text_to_generate_image(image_request: TextToImageRequest) -> dict:
-    """
-    Generate an image using the Each Labs API.
-
-    Args:
-        image_request (TextToImageRequest): The request object containing image generation parameters.
-
-    Returns:
-        dict: A dictionary containing the prompt and the generated image URL, or None if the generation failed.
-    """
     prompt = image_request.prompt
-    model_name = image_request.model_name
+    model_name = image_request.eachlabs_model_name
     intend = getattr(image_request.intend, "intend", None)
     try:
         # Create prediction and get prediction ID
@@ -33,7 +24,6 @@ def text_to_generate_image(image_request: TextToImageRequest) -> dict:
         
         # Get the image URL
         result = get_prediction(prediction_id)
-        print("result---------------", result)
         image_url=result['output']
         intend = image_request.intend
 
@@ -48,18 +38,3 @@ def text_to_generate_image(image_request: TextToImageRequest) -> dict:
             "intend": intend, 
             "image_url": None
         }
-
-
-if __name__ == "__main__":
-    # Example input
-    image_request = TextToImageRequest(
-        model_name="flux-dev-realism",
-        prompt="A dog wearing a hat, in a cartoon style, colorful and fun",
-        intend = "str"
-    )
-
-    # Generate image and get result
-    result = text_to_generate_image(image_request)
-
-    # Print the result in the specified format
-    print(result)

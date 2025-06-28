@@ -13,13 +13,18 @@ async def generate_video(request: TextToVideoRequest):
     """
     try:
         prompt = request.prompt
-        result = text_to_video_generate(request)
+        response,model_info,intend = text_to_video_generate(request)
         
         return {
-            "message": "Video generated successfully",
-            "prompt":prompt,
-            "video_url": result
-            
-        }
+        "response": {
+            'prompt': prompt,
+            "status": response['status'],
+            "result": response['output'],
+            "price": response['metrics']['cost']
+        },
+        "model_info": model_info,
+        "intend": intend,
+        "runtime": round( response['metrics']['predict_time'], 3)
+    }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Video generation failed: {str(e)}")

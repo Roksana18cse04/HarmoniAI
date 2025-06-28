@@ -15,22 +15,24 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 def create_pdf_to_text_prediction(pdf_url:str):
+    playload = {
+        "model": "pdf-to-text",
+        "version": "0.0.1",
+        "input": {
+            "url": pdf_url
+        },
+        "webhook_url": ""
+    }
+    
     response = requests.post(
         "https://api.eachlabs.ai/v1/prediction/",
         headers=HEADERS,
-        json={
-            "model": "pdf-to-text",
-            "version": "0.0.1",
-            "input": {
-                "url": pdf_url
-            },
-            "webhook_url": ""
-        }
+        json=playload
     )
     prediction = response.json()
     
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     
-    return prediction["predictionID"]
+    return prediction["predictionID"],playload
 

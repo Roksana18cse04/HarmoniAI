@@ -21,8 +21,8 @@ def get_prediction(prediction_id: str) -> str:
                 f"https://api.eachlabs.ai/v1/prediction/{prediction_id}",
                 headers=HEADERS
             ).json()
-            
             if result["status"] == "success":
+                print(f"Prediction result:---------get--------- {result}")
                 return result
             elif result["status"] == "error":
                 raise Exception(f"Prediction failed: {result}")

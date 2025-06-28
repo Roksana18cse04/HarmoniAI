@@ -50,7 +50,7 @@ VOICE_DATABASE = {
         "Will": "bIHbv24MWmeRgasZH58o"
     }
 }
-def analyze_prompt(prompt: str, platform: str) -> dict:
+def analyze_prompt(prompt: str, platform: str,llm_model_name) -> dict:
     """
     Analyzes the prompt to detect voice type, language, and the exact portion for audio conversion.
     Returns structured output in JSON format.
@@ -77,7 +77,7 @@ def analyze_prompt(prompt: str, platform: str) -> dict:
     """
 
     try:
-        llm = LLMProvider(platform)
+        llm = LLMProvider(platform, llm_model_name)
         response_text = llm.generate_response(system_message, prompt)
         # Parse JSON safely
         parsed = json.loads(response_text)
@@ -85,12 +85,16 @@ def analyze_prompt(prompt: str, platform: str) -> dict:
         audio_prompt = parsed.get("audio-prompt", prompt)
         voicetype = parsed.get("voicetype", "female")
         language = parsed.get("language", "english")
-
+        price = price_calculate(platform, llm_model_name, prompt, response_text)
+        
         return {
             "prompt":prompt,
             "audio-prompt": audio_prompt,
             "voicetype": voicetype,
-            "language": language
+            "language": language,
+            "price": price['price'],
+            "input_token": price['input_token'],
+            "output_token": price['output_token']
         }
 
     except Exception as e:
@@ -103,11 +107,16 @@ def analyze_prompt(prompt: str, platform: str) -> dict:
         }
 
 
-def create_prediction(request:TextToAudioRequest):
+def create_prediction(platform,request:TextToAudioRequest):
     """
     Creates the prediction request payload based on model and user inputs.
     """
-    analysis_result = analyze_prompt(request.prompt,request.platform)
+    analysis_result = analyze_prompt(request.prompt,platform,request.llm_model_name)
+    price_details = {
+        "input_token": analysis_result.get("input_token", 0),
+        "output_token": analysis_result.get("output_token", 0),
+        "price": analysis_result.get("price", 0.0)
+    }
     voice_type = analysis_result.get('voicetype', 'male').lower()  # Default to 'male' if not provided
     language = analysis_result.get('language', 'english')
     audio_prompt = analysis_result.get('audio-prompt', request.prompt)
@@ -123,7 +132,7 @@ def create_prediction(request:TextToAudioRequest):
         voice_id = random.choice(list(VOICE_DATABASE["male"].values()))
 
     payload = {
-        "model": request.model_name or "eleven-multilingual-v2",
+        "model": request.eachlabs_model_name or "eleven-multilingual-v2",
         "version": "0.0.1",
         "input": {
             "use_speaker_boost": False,
@@ -145,27 +154,23 @@ def create_prediction(request:TextToAudioRequest):
     prediction = response.json()
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
-    return prediction["predictionID"]
+    return prediction,payload, price_details
 
-def text_to_audio_generate(request:TextToAudioRequest):
+def text_to_audio_generate(platform,request:TextToAudioRequest):
     """
     Generates audio based on the selected model and text.
     """
     try:
-        prediction_id = create_prediction(request)
+        prediction,payload, price_details = create_prediction(platform,request)
+        prediction_id = prediction["predictionID"]
         print(f"Prediction ID: {prediction_id}")  # Debugging line
 
         audio_result = get_prediction(prediction_id)
-        url = audio_result.get("output")
+        url = audio_result["output"]
 
         if url:
             print(f"Audio generated successfully: {url}")
-            return {
-                "prompt": request.prompt,
-                "platform": request.platform,
-                "audio": url ,
-                "intend":request.intend              
-            }
+            return audio_result, payload, price_details
         else:
             raise Exception("Audio generation failed: No output URL found.")
     except Exception as e:

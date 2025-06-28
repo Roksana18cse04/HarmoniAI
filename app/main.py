@@ -1,4 +1,6 @@
 from fastapi import FastAPI
+from fastapi_mcp import FastApiMCP
+
 from app.services.media_content import fetch_all_media
 from app.services.product_weaviate import fetch_and_index_all_products
 from app.services.create_schema import setup_schema

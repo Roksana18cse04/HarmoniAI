@@ -27,10 +27,6 @@ async def video_generate(
 
     # Use uploaded URLs to generate video
     result,model_info = generate_video_with_audio(audio_url, image_url)
-    
-    print(f"Generated Video URL: {result}")
-    print(f"Model Info: {model_info}")
-
     return {
         "prompt": {
             "image_url": image_url,
