@@ -38,12 +38,18 @@ def analyze_prompt_language_detect(input_text: str, platform: str) -> dict:
 
     llm = LLMProvider(platform)
     response = llm.generate_response(system_prompt, user_prompt)
-    
+    # Handle dict or unexpected response types
+
+    language = response.get("content", "").strip().lower()
+    if not language:
+        raise ValueError("Language detection failed. No content returned from LLM.")
     price = price_calculate(platform,input_text, response)
 
     return {
-        "detected_language": response.strip(),
-        "price": price
+        "detected_language":language,
+        "price": price['price'],
+        "input_token": price['input_token'],
+        "output_token": price['output_token']
     }
 
 def map_language_for_model(model_name: str, detected_language: str) -> str:
@@ -63,6 +69,11 @@ def create_voice_to_voice_prediction(
 
     # Detect and map language
     detected_language_info = analyze_prompt_language_detect(input_text, platform)
+    price_details = {
+        "input_token": detected_language_info["input_token"],
+        "output_token": detected_language_info["output_token"],
+        "price": detected_language_info["price"]
+    }
     detected_language = detected_language_info["detected_language"]
     mapped_language = map_language_for_model(model_name, detected_language)
 
@@ -99,8 +110,5 @@ def create_voice_to_voice_prediction(
     if prediction.get("status") != "success":
         raise Exception(f"Prediction failed: {prediction}")
 
-    return {
-        "prediction_id": prediction["predictionID"],
-        "model_info": payload
-    }
+    return prediction ,price_details
 

@@ -3,7 +3,6 @@ import time
 import os
 from dotenv import load_dotenv
 
-from app.services._get_prediction import get_prediction
 
 # Load environment variables
 load_dotenv(override=True)
@@ -33,5 +32,5 @@ def create_prediction(audio_url:str,image_url:str):
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     
-    return prediction["predictionID"]
+    return prediction
 
