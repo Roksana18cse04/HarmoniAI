@@ -8,8 +8,9 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class LLMProvider:
-    def __init__(self, provider: str):
+    def __init__(self, provider: str, model):
         self.provider = provider.lower()
+        self.model = model
 
     def generate_response(self, system_prompt, user_prompt):
         if self.provider == "chatgpt":
@@ -25,7 +26,8 @@ class LLMProvider:
         try:
             client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
             response = client.chat.completions.create(
-                model="gpt-4",
+                # model="gpt-4",
+                model= self.model,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt}
@@ -46,7 +48,8 @@ class LLMProvider:
             "Content-Type": "application/json"
         }
         payload = {
-            "model": "llama3-70b-8192",
+            # "model": "llama3-70b-8192",
+            "model": self.model,
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt}
@@ -64,7 +67,7 @@ class LLMProvider:
 
     def _call_google(self, system_prompt, user_prompt):
         print("call google")
-        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-pro-preview-05-06:generateContent"
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{self.model}:generateContent" # gemini-2.5-pro-preview-05-06
         headers = {"Content-Type": "application/json"}
         params = {"key": os.getenv("GEMINI_API_KEY")}
         payload = {

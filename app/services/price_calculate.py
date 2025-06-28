@@ -11,28 +11,31 @@ def count_tokens(text: str, model):
     except TypeError:
         raise ValueError(f"Invalid input to tokenizer: {text} (type {type(text)})")
 
-def price_calculate(platform: str, prompt: str, response: str):
+def price_calculate(platform: str, model, prompt: str, response: str):
     platform = platform.lower()
 
     # get pricing
-    api_url = "https://harmoniai-backend.onrender.com/api/v1/configure/get-configure"
+    api_url = f"https://harmoniai-backend.onrender.com/api/v1/llm-model/get-all-llm-model?isDeleted=false&searchTerm={model}"
     res = requests.get(api_url)
     res.raise_for_status()
     data = res.json()
 
-    inputPrice = data['data']['models'][platform]['inputToken']
-    outputPrice = data['data']['models'][platform]['outputToken']
-    input_price = inputPrice / 1000
-    output_price = outputPrice / 1000
+    results = data['data']['result']
 
-    if platform == 'chatgpt':
-        model = 'gpt-4'
-    elif platform == 'grok':
-        model = 'llama3-70b-8192'
-    elif platform == 'gemini':
-        model = 'gemini-1.5-pro'
+    matched_model = next(
+        (item for item in results if item.get('name') == model),
+        None
+    )
+
+    if matched_model:
+        input_price = matched_model.get('inputTokenPrice', 0)
+        output_price = matched_model.get('outputTokenPrice', 0)
     else:
-        raise ValueError(f"Unsupported platform: {platform}")
+        print(f"[price_calculate] No matching model found for: {model}")
+        input_price = output_price = 0
+    
+    input_price = input_price / 1000
+    output_price = output_price / 1000
     
     if not isinstance(response, str):
         response = json.dumps(response)

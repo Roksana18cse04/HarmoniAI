@@ -11,10 +11,11 @@ async def get_models_list():
     models = [{
         "id": model["id"],
         "title": model["title"],
-        "name": model["slug"],
-        "thumbnail_url": model["thumbnail_url"],
-        "price": model["gpu_device_id"]["price"],
-        "intend": model["category"]["slug"]
-
+        "title_slug": model["slug"],
+        "category_name": model['category']['name'],
+        "category_name_slug": model["category"]["slug"],
+        "image": model["thumbnail_url"],
+        "charge": model["gpu_device_id"]["price"]
+    
     } for model in models_list]
     return {"models": models}

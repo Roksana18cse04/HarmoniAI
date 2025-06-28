@@ -10,7 +10,7 @@ load_dotenv()
 # Initialize OpenAI or use your preferred LLM provider
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def classify_prompt_agent(platform, prompt: str, categories_list: list) -> dict:
+def classify_prompt_agent(platform, model, prompt: str, categories_list: list) -> dict:
     # Prepare categories list in the format needed for the system prompt
     formatted_categories = [
         {
@@ -131,12 +131,13 @@ def classify_prompt_agent(platform, prompt: str, categories_list: list) -> dict:
     # )
     # Parse and return LLM response
 
-    llm = LLMProvider(platform)
+    llm = LLMProvider(platform, model)
     response = llm.generate_response(system_prompt, prompt)
     
     try:
         # result_json = json.loads(response.choices[0].message.content.strip())
         # Strip markdown
+        print(response['content'])
         match = re.search(r'{.*}', response['content'], re.DOTALL)
         if match:
             response = json.loads(match.group())

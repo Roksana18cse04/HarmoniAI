@@ -29,7 +29,7 @@ def extract_content_from_url(url: str) -> str:
         return trafilatura.extract(downloaded)
     return ""
 
-def summarize_content(platform, content: str, original_prompt: str) -> str:
+def summarize_content(platform, model, content: str, original_prompt: str) -> str:
     system_prompt = """
 You are a helpful assistant that reads and understands web content, and answers user questions accurately based only on the information found in the provided article.
 
@@ -49,16 +49,16 @@ Be concise, informative, and neutral. Only answer based on what the article expl
 """
 
     user_prompt = f"Based on the following article, answer this user query: '{original_prompt}'\n\nArticle:\n{content}"
-    llm = LLMProvider(platform)
+    llm = LLMProvider(platform, model)
     return llm.generate_response(system_prompt, user_prompt)
 
-def llm_answer(platform, prompt: str) -> str:
+def llm_answer(platform, model, prompt: str) -> str:
     system_prompt = "You are a helpful assistant who answers questions clearly and factually. If the user mentions a specific domain (e.g., AI, medicine, law), prefer answering in that domain."
-    llm = LLMProvider(platform)
+    llm = LLMProvider(platform, model)
     response = llm.generate_response(system_prompt, prompt)
     return response
 
-def question_answer_agent(platform: str, prompt: str, full_prompt) -> str:  
+def question_answer_agent(platform: str, model, prompt: str, full_prompt) -> str:  
     # get history message
 
     # Step 3: Check for current event
@@ -70,8 +70,8 @@ def question_answer_agent(platform: str, prompt: str, full_prompt) -> str:
             print(content)
             if content and len(content) > 500:
                 try:
-                    response = summarize_content(platform, content, prompt)
-                    price = price_calculate(platform, prompt, response)
+                    response = summarize_content(platform,model, content, prompt)
+                    price = price_calculate(platform, model, prompt, response)
                     return {
                         "response": response,
                         "price": price['price'],
@@ -84,8 +84,8 @@ def question_answer_agent(platform: str, prompt: str, full_prompt) -> str:
     
     # Step 4: Answer using full context
     else:
-        response = llm_answer(platform, full_prompt)
-        price = price_calculate(platform, prompt, response)
+        response = llm_answer(platform, model, full_prompt)
+        price = price_calculate(platform,model, prompt, response)
         return {
             "response": response,
             "price": price['price'],

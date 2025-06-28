@@ -7,6 +7,7 @@ def setup_schema():
             weaviate_client.collections.create(
                 name="Product",
                 properties=[
+                    Property(name="product_id", data_type=DataType.TEXT, is_primary_key=True),
                     Property(name="title", data_type=DataType.TEXT),
                     Property(name="color", data_type=DataType.TEXT),
                     Property(name="gender", data_type=DataType.TEXT),
@@ -27,6 +28,7 @@ def setup_schema():
             weaviate_client.collections.create(
                 name="ContentItem",
                 properties=[
+                    Property(name="content_id", data_type=DataType.TEXT, is_primary_key=True),
                     Property(name="title", data_type=DataType.TEXT),
                     Property(name="category", data_type=DataType.TEXT),
                     Property(name="genre_list", data_type=DataType.TEXT_ARRAY),
@@ -47,5 +49,8 @@ def setup_schema():
             print("Created ContentItem schema.")
         else:
             print("ContentItem schema already exists.")
+        weaviate_client.close()
+
     except Exception as e:
         print(f"Error creating ContentItem schema: {e}")
+setup_schema()
