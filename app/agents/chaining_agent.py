@@ -94,7 +94,7 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "user_prompt": prompt,
             "response": "Sorry, I can't help with that.",
             "model_info": {
-                'model_name': model
+                'llm_model_name': model
             },
             "intend": "unknown",
             "runtime": round( time.time()-start_time, 3)
@@ -106,7 +106,7 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "user_prompt": prompt,
             "response": shopping_result,
             "model_info": {
-                'model_name': model,
+                'llm_model_name': model,
             },
             "intend": "shopping",
             "runtime": round( time.time()-start_time, 3)
@@ -117,7 +117,7 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "user_prompt": prompt,
             "response": response,
             "model_info": {
-                'model_name': model
+                'llm_model_name': model
             },
             "intend": "media-recommendation",
             "runtime": round( time.time()-start_time, 3)
@@ -129,7 +129,7 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "user_prompt": prompt,
             "response": response,
             "model_info": {
-                'model_name': model
+                'llm_model_name': model
             },
             "intend": "question-answering",
             "runtime": round( time.time()-start_time, 3)
@@ -144,7 +144,7 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "user_prompt": prompt,
             "response": caption_text,
             "model_info": {
-                'model_name': model
+                'llm_model_name': model
             },
             "intend": "caption-create",
             "runtime": round( time.time()-start_time, 3)
@@ -166,7 +166,7 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "user_prompt": prompt,
             "response": response['result'],
             "model_info": {
-                'model_name': model,
+                'llm_model_name': model,
                 'eachlabs_models': models
             },
             "intend": "content-generate",
@@ -178,7 +178,7 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "user_prompt": prompt,
             "response": response,
             "model_info": {
-                'model_name': model
+                'llm_model_name': model
             },
             "intend": "chatting",
             "runtime": round( time.time()-start_time, 3)
@@ -189,13 +189,13 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
         if not models:
             return {
                 "user_prompt": prompt,
-                "models": [],
+                "eachlabs_models": [],
                 "message": "Currently, model is not available",
                 # "runtime": round( time.time()-start_time, 3)
             }
         return {
             "user_prompt": prompt,
-            "models": models,
+            "eachlabs_models": models,
             "intend": model_category['intent'],
             # "runtime": round( time.time()-start_time, 3)
         }

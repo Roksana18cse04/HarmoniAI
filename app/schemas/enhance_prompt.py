@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 class EnhanceRequest(BaseModel):
-    platform: str
+    chat_id: str
     base_prompt: str
-    target_model: str
+    eachlabs_model: str
+    llm_model: str
     intend: str

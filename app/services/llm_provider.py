@@ -37,6 +37,7 @@ class LLMProvider:
             )
             content = response.choices[0].message.content.strip()
             return {"status": "success", "content": content}
+        
         except Exception as e:
             return {"status": "error", "content": None, "error": str(e)}
 
