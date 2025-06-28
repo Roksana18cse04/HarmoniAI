@@ -12,7 +12,7 @@ load_dotenv()
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-def generate_caption_from_instruction(platform, instruction: str, image_path: Optional[str] = None):
+def generate_caption_from_instruction(platform, model, instruction: str, image_path: Optional[str] = None):
     system_prompt = """
 You are a smart caption creation assistant. A user will give you either:
 - A free-form instruction describing what kind of content they want to post (e.g., "write a LinkedIn post")
@@ -48,9 +48,9 @@ Your job is to:
     # result_content = response.choices[0].message.content.strip()
     system_prompt= system_prompt.strip()
     user_prompt = user_content if image_path else instruction
-    llm = LLMProvider(platform)
+    llm = LLMProvider(platform, model)
     response = llm.generate_response(system_prompt, user_prompt)
-    price = price_calculate(platform, user_prompt, response)
+    price = price_calculate(platform,model, user_prompt, response)
     return {
         "response": response,
         "price": price['price'], 
@@ -59,7 +59,7 @@ Your job is to:
     }
 
 
-def caption_generator(platform, file: UploadFile, instruction):
+def caption_generator(platform, model, file: UploadFile, instruction):
     image_path = None
 
     if file:
@@ -69,7 +69,7 @@ def caption_generator(platform, file: UploadFile, instruction):
             shutil.copyfileobj(file.file, buffer)
 
     try:
-        return generate_caption_from_instruction(platform, instruction, image_path)
+        return generate_caption_from_instruction(platform, model, instruction, image_path)
     finally:
         if image_path and os.path.exists(image_path):
             os.remove(image_path)

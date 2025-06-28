@@ -11,13 +11,13 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
 
 # === SHOPPING AGENT ===
-def shopping_agent(platform, user_prompt):
+def shopping_agent(platform, model, user_prompt):
     relevant_products = query_weaviate_products(user_prompt, top_k=10)
 
     print("relevant products -----------", relevant_products)
 
     product_text = "\n".join([
-        f"- Title: {p['title']}, Color: {p['color']}, Gender: {p['gender']}, Price: {p['price']}, Link: {p['link']}, Image_link: {p['image_link']}"
+        f"- ID: {p['product_id']} Title: {p['title']}, Color: {p['color']}, Gender: {p['gender']}, Price: {p['price']}, Link: {p['link']}, Image_link: {p['image_link']}"
         for p in relevant_products
     ])
 
@@ -30,6 +30,7 @@ The user asks: "{user_prompt}"
 **Task:**  
 1. Select **up to 5** best-matching products (fewer if not enough are relevant).  
 2. Return them as a **valid JSON array** with each item containing:  
+   - `product_id` (string)  
    - `title` (string)  
    - `price` (string/number)  
    - `link` (string, URL)  
@@ -44,6 +45,7 @@ Example output format:
 ```json
 [
     {{
+        "product_id": "12345",
         "title": "Product Name",
         "price": "$19.99",
         "link": "https://example.com/product",
@@ -58,7 +60,7 @@ Example output format:
     )
     try:
         response_text = json.loads( response.choices[0].message.content )
-        price =  price_calculate("chatgpt", user_prompt, response_text)
+        price =  price_calculate("chatgpt", model, user_prompt, response_text)
         return {
             "response": response_text,
             "price": price['price'],

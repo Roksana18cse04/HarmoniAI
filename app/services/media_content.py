@@ -234,7 +234,7 @@ def embed_text(text):
         print(f"Failed to embed query text: {e}")
         return None
     
-def query_weaviate_media(platform, user_prompt, top_k: int = 10):
+def query_weaviate_media(user_prompt, top_k: int = 10):
     """Query Weaviate for content items based on user prompt."""
     query_vector = embed_text(user_prompt)
     # print("type------------", type(query_vector))

@@ -31,7 +31,7 @@ def embed_products_in_batches(products):
         end = start + BATCH_SIZE
         batch = products[start:end]
 
-        texts = [f"{p['title']} {p['color']} {p['gender']} {p['price']} {p['link']} {p['image_link']}" for p in batch]
+        texts = [f"{p['product_id']} {p['title']} {p['color']} {p['gender']} {p['price']} {p['link']} {p['image_link']}" for p in batch]
 
         try:
             response = openai_client.embeddings.create(
@@ -71,6 +71,7 @@ def upsert_products_to_weaviate(products):
     for product, vector in zip(metadata, vectors):
         data_object = wvc.data.DataObject(
             properties={
+                "product_id": product["product_id"],
                 "title": product["title"],
                 "color": product["color"],
                 "gender": product["gender"],
@@ -134,6 +135,7 @@ def query_weaviate_products(user_prompt, top_k=10):
         products = []
         for item in response.objects:
             product = {
+                "product_id": item.properties.get("product_id"),
                 "title": item.properties.get("title"),
                 "color": item.properties.get("color"),
                 "gender": item.properties.get("gender"),
@@ -193,3 +195,10 @@ def fetch_and_index_all_products():
     print(f"Total fetched products: {len(all_products)}")
     products = deduplicate_products(all_products)
     upsert_products_to_weaviate(products)
+    client.close()
+
+if __name__ == "__main__":
+    # Example usage
+    fetch_and_index_all_products()
+    
+    

@@ -5,8 +5,8 @@ from app.services.llm_provider import LLMProvider
 import json
 
 # === MEDIA AGENT ===
-def media_agent(platform, user_prompt):
-    relevant_items = query_weaviate_media(platform, user_prompt, top_k=10)
+def media_agent(platform, model, user_prompt):
+    relevant_items = query_weaviate_media(user_prompt, top_k=10)
 
     print("Relevant media items -----------", relevant_items)
 
@@ -55,13 +55,13 @@ Example output format:
     #     temperature=0.3,
     # )
 
-    llm = LLMProvider(platform)
+    llm = LLMProvider(platform, model)
     response = llm.generate_response("", prompt)
     print(response)
     try:
         # response_text = json.loads( response.choices[0].message.content )
         response_text = json.loads (response)
-        price =  price_calculate("chatgpt", user_prompt, response_text)
+        price =  price_calculate('chatgpt',model, user_prompt, response_text)
         return {
             "response": response_text,
             "price": price['price'],

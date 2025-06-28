@@ -18,6 +18,7 @@ def get_products_from_xml(url):
             return el.text.strip() if el and el.text else ""
 
         product = {
+            "product_id": get("g:id") or get("id"),
             "title": get("title"),
             "link": get("link"),
             "image_link": get("g:image_link"),

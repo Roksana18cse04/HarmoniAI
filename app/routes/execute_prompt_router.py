@@ -36,6 +36,7 @@ def get_history(chatId, prompt):
 @router.post("/execute-prompt")
 async def execute_prompt(
     chat_id: str = Form(...),
+    model: str = Form(...),
     prompt: str = Form(...),
     file: Optional[Union[UploadFile, str]] = File(None)
 ):
@@ -52,6 +53,6 @@ async def execute_prompt(
     prompt= correct_spelling(prompt)
     platform, full_prompt= get_history(chat_id, prompt)        
     
-    result = run_multi_agent_chain(platform, prompt, full_prompt, processed_file)
+    result = run_multi_agent_chain(platform, model, prompt, full_prompt, processed_file)
     return result
     
