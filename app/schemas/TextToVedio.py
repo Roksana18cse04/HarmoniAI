@@ -3,7 +3,7 @@ from typing import Optional
 
 class TextToVideoRequest(BaseModel):
     prompt: str
-    model_name: str
+    eachlabs_model_name: str
     duration: int
     intend :str
 

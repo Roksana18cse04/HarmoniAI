@@ -39,8 +39,5 @@ def create_prediction(video_url:str):
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     
-    return {
-        "prediction_id": prediction["predictionID"],
-        "model_info": playload
-    }
+    return prediction ,playload
 

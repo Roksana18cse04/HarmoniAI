@@ -13,24 +13,26 @@ HEADERS = {
 }
     
 def create_prediction(audio_url:str,image_url:str):
-    response = requests.post(
-        "https://api.eachlabs.ai/v1/prediction/",
-        headers=HEADERS,
-        json={
-            "model": "omnihuman",
-            "version": "0.0.1",
-            "input": {
+    playload = {
+        "model": "omnihuman",
+        "version": "0.0.1",
+        "input": {
             "mode": "normal",
             "audio_url": audio_url,
             "image_url": image_url
         },
-            "webhook_url": ""
-        }
+        "webhook_url": ""
+    }
+    response = requests.post(
+        "https://api.eachlabs.ai/v1/prediction/",
+        headers=HEADERS,
+        json=playload
     )
     prediction = response.json()
+
     
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     
-    return prediction
+    return prediction,playload
 

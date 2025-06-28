@@ -8,9 +8,6 @@ router = APIRouter()
 async def video_to_text(video_url: str = Form(...), intend: str = Form(...)):
     try:
         result, model_info = video_to_text_generate(video_url)
-        print(f"-------------routrer-----------------")
-        print(f"Generated Text: {result}")
-        print(f"Model Info: {model_info}")
         return {
             "prompt": video_url,
             "response": result['output'],

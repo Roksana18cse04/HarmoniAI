@@ -14,7 +14,7 @@ HEADERS = {
  
 def create_prediction(prompt: str, model_name: str, duration: int):
     url= "https://api.eachlabs.ai/v1/prediction/"
-    payload = {
+    playload = {
             "model": model_name,
             "version": "0.0.1",
             "input": {
@@ -31,24 +31,10 @@ def create_prediction(prompt: str, model_name: str, duration: int):
             }
     }
  
-    response = requests.post(url, headers=HEADERS, json= payload)
+    response = requests.post(url, headers=HEADERS, json= playload)
            
     prediction = response.json()
     print(f"Prediction response: {prediction}")  # Debugging line
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
-    return prediction["predictionID"]
-
-def get_prediction(prediction_id):
-    while True:
-        result = requests.get(
-            f"https://api.eachlabs.ai/v1/prediction/{prediction_id}",
-            headers=HEADERS
-        ).json()
-       
-        if result["status"] == "success":
-            return result
-        elif result["status"] == "error":
-            raise Exception(f"Prediction failed: {result}")
-       
-        time.sleep(1)  # Wait before polling again
+    return prediction,playload

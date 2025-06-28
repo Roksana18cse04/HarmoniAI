@@ -1,18 +1,19 @@
 from app.services.voice_to_voice import create_voice_to_voice_prediction
 from app.services._get_prediction import get_prediction
 
-
-
-def voice_to_voice_clone_agents(model_name: str,input_text: str,audio_file_url: str,platform: str):
-    # Get the prediction from the model
+def voice_to_voice_clone_agents(platform, prompt, audio_file_url, llm_model, eachlabs_name, intend):
     try:
-        # Create prediction
-        input_text = str(input_text).strip()
-        response ,price_details= create_voice_to_voice_prediction(model_name,input_text,audio_file_url,platform)
-        prediction_id = response['predictionID']    
-        # Get result
+        response, model_info, price_details = create_voice_to_voice_prediction(
+            platform, prompt, audio_file_url, llm_model, eachlabs_name
+        )
+        prediction_id = response['predictionID']
+
+        if not prediction_id:
+            raise ValueError("Missing predictionID in response.")
+
         result = get_prediction(prediction_id)
-        return result, response ,price_details
+        return result, model_info, price_details
+
     except Exception as e:
         print(f"Error: {e}")
-        
+        return None
