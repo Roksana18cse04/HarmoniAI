@@ -15,7 +15,7 @@ async def get_models_list():
         "category_name": model['category']['name'],
         "category_name_slug": model["category"]["slug"],
         "image": model["thumbnail_url"],
-        "charge": model["gpu_device_id"]["price"]
+        "price": model["gpu_device_id"]["price"]
     
     } for model in models_list]
     return {"models": models}
