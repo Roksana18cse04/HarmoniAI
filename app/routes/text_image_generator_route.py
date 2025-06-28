@@ -15,5 +15,14 @@ def image_generate(data: TextToImageRequest):
     """
     Classify the given prompt into one of the predefined categories.
     """
-    result = text_to_generate_image(data)
-    return result
+    response, model_info = text_to_generate_image(data)
+    return {
+        "response": {
+            "status": response['status'],
+            "result": response['output'],
+            "price": response['metrics']['cost'],
+        },
+        "model_info": model_info,
+        "intend": "text-to-image",
+        "runtime": round( response['metrics']['predict_time'], 3)
+    }

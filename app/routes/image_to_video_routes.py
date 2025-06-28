@@ -1,7 +1,6 @@
 from fastapi import APIRouter, UploadFile, File,Form
 from app.utils.r2_uploader import upload_to_r2
 from app.agents.audio_video import generate_video_with_audio
-from app.schemas.video_with_audio import VideoWithAudioRequest
 
 router = APIRouter()
 
@@ -27,12 +26,19 @@ async def video_generate(
         return {"error": "Upload failed"}
 
     # Use uploaded URLs to generate video
-    request_data = VideoWithAudioRequest(image_url=image_url, audio_url=audio_url)
-    video_url = generate_video_with_audio(data=request_data)
+    result,model_info = generate_video_with_audio(audio_url, image_url)
+    
+    print(f"Generated Video URL: {result}")
+    print(f"Model Info: {model_info}")
 
     return {
-        "image_url": image_url,
-        "audio_url": audio_url,
-        "video_url": video_url,
-        "intend": intend
+        "prompt": {
+            "image_url": image_url,
+            "audio_url": audio_url,
+        },
+        "response": result['output'],
+        "price": result["metrics"]["cost"],
+        "model_info": model_info,
+        "intend": intend,
+        "runtime": result['metrics']['predict_time']
     }

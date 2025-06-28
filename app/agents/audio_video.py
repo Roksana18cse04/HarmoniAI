@@ -1,19 +1,20 @@
 
-from app.schemas.video_with_audio import VideoWithAudioRequest
-from app.services.VideoGenerationWithAudio import create_prediction, get_prediction
+from app.services.VideoGenerationWithAudio import create_prediction
+from app.services._get_prediction import get_prediction
 
 
 
 
-def generate_video_with_audio(data:VideoWithAudioRequest): 
-    # Generate video using the audio URL
-    prediction_id = create_prediction(data.audio_url,data.image_url)
-    
+def generate_video_with_audio(audio_url: str, image_url: str): 
+    # Generate video using the audio 
     try:
-        video_url = get_prediction(prediction_id)
-        url = video_url.get("output")
-        if url:
-            return url
+        response = create_prediction(audio_url,image_url)
+        prediction_id = response['predictionID']
+        print(f"Prediction ID: ---agents--- {prediction_id}")
+        print(f"Model Info: {response['model_info']}")
+        result = get_prediction(prediction_id)
+        if result.get("status") == "success":
+            return response,result
         else:
             raise Exception("Video generation failed: No output URL found.")
     except Exception as e:
