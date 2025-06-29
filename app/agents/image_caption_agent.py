@@ -35,22 +35,11 @@ Your job is to:
         image_url = f"data:image/jpeg;base64,{encoded_image}"
         user_content.append({"type": "image_url", "image_url": {"url": image_url}})
 
-    # response = client.chat.completions.create(
-    #     model="gpt-4-turbo",
-    #     messages=[
-    #         {"role": "system", "content": system_prompt.strip()},
-    #         {"role": "user", "content": user_content if image_path else instruction}
-    #     ],
-    #     max_tokens=500,
-    #     temperature=0.7
-    # )
-
-    # result_content = response.choices[0].message.content.strip()
     system_prompt= system_prompt.strip()
     user_prompt = user_content if image_path else instruction
     llm = LLMProvider(platform, model)
     response = llm.generate_response(system_prompt, user_prompt)
-    price = price_calculate(platform,model, user_prompt, response)
+    price = price_calculate(platform,model, user_prompt, response['content'])
     return {
         "response": response,
         "price": price['price'], 

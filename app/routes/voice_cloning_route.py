@@ -4,6 +4,7 @@ from app.agents.voice_cloning_agents import voice_to_voice_clone_agents
 from app.utils.r2_uploader import upload_to_r2
 import uuid
 from app.routes.execute_prompt_router import get_history
+from app.services.store_chat_message import store_generated_message
 
 router = APIRouter()
 
@@ -32,6 +33,7 @@ async def voice_cloning(
     mprice = response['metrics']['cost']
     price = lprice + mprice
 
+    # store_generated_message(user_id, chat_id, prompt, response=)
     return {
         "response": {
             'prompt': prompt,
@@ -39,8 +41,10 @@ async def voice_cloning(
             "result": response['output'],
             "price": price
         },
-        "model_info": model_info,
-        "llm_model_name": llm_model,
+        "model_info": {
+            'eachlabs_model_info': model_info,
+            'llm_model_info': llm_model
+        },
         "input_tokens": input_tokens,
         "output_tokens": output_tokens,
         "intend": intend,

@@ -3,9 +3,17 @@
 import os
 import requests
 from openai import OpenAI
+from app.services.extract_json_from_response import extract_json_from_llm
 from dotenv import load_dotenv
+import json
 
 load_dotenv()
+
+import json
+import re
+
+
+
 
 class LLMProvider:
     def __init__(self, provider: str, model):
@@ -35,8 +43,11 @@ class LLMProvider:
                 temperature=0.7,
                 max_tokens=500,
             )
-            content = response.choices[0].message.content.strip()
-            return {"status": "success", "content": content}
+            print("row llm response--------------", response)
+            content = response.choices[0].message.content
+            print(content)
+            result = extract_json_from_llm(content)
+            return {"status": "success", "content": result}
         
         except Exception as e:
             return {"status": "error", "content": None, "error": str(e)}
@@ -61,8 +72,13 @@ class LLMProvider:
         try:
             response = requests.post(url, headers=headers, json=payload)
             response.raise_for_status()
-            content = response.json()["choices"][0]["message"]["content"]
-            return {"status": "success", "content": content}
+            content = response['choices'][0]['message']['content'].strip()
+            # Try to load as JSON only if it starts with { or [
+            if content.startswith('{') or content.startswith('['):
+                result = json.loads(content)
+            else:
+                result = content.strip('"')
+            return {"status": "success", "content": result}
         except Exception as e:
             return {"status": "error", "content": None, "error": str(e)}
 
@@ -83,6 +99,11 @@ class LLMProvider:
             response = requests.post(url, headers=headers, params=params, json=payload)
             response.raise_for_status()
             content = response.json()["candidates"][0]["content"]["parts"][0]["text"]
-            return {"status": "success", "content": content}
+            # Try to load as JSON only if it starts with { or [
+            if content.startswith('{') or content.startswith('['):
+                result = json.loads(content)
+            else:
+                result = content.strip('"')
+            return {"status": "success", "content": result}
         except Exception as e:
             return {"status": "error", "content": None, "error": str(e)}

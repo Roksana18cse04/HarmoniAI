@@ -120,29 +120,14 @@ def classify_prompt_agent(platform, model, prompt: str, categories_list: list) -
         "{\n  \"intent\": \"slug\",\n  \"category_id\": number\n}"
         "You support multilingual prompts (e.g., English, Turkish, Spanish, French, Arabic, etc.)."
     )
-    # Send prompt to OpenAI
-    # response = client.chat.completions.create(
-    #     model="gpt-4",
-    #     messages=[
-    #         {"role": "system", "content": system_prompt},
-    #         {"role": "user", "content": prompt}
-    #     ],
-    #     temperature=0.3
-    # )
-    # Parse and return LLM response
 
     llm = LLMProvider(platform, model)
-    response = llm.generate_response(system_prompt, prompt)
     
     try:
-        # result_json = json.loads(response.choices[0].message.content.strip())
-        # Strip markdown
+        response = llm.generate_response(system_prompt, prompt)
         print(response['content'])
-        match = re.search(r'{.*}', response['content'], re.DOTALL)
-        if match:
-            response = json.loads(match.group())
-
         return response
+    
     except json.JSONDecodeError:
         return {
             "intend": None,
