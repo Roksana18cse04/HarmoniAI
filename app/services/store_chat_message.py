@@ -8,8 +8,32 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
     responses=[]
     if intend=='caption-create':
         inputs.append({"type": "image", "content": input_urls})
-    elif intend=='chat':
-        responses.append({'type': 'text', 'content': response['result']})
+    elif intend=='chat' or intend=='question-answering':
+        responses.append({'type': 'text', 'content': response['output']})
+    elif intend=='shopping':
+        responses.append({ 
+            "type": "card",
+            "isCard": True,
+            "cardContent": [
+                {
+                    "id":response['output']['id'],
+                    "title": response['output']['title'],
+                    "description": response['output']['description'],
+                    "type": "image",
+                    "file": response['output']['link'],
+                    "image": response['output']['image'],
+                    "price": response['output']['price']
+                }]   
+            })
+        
+    llm_model_info=None
+    if llm_model:
+        llm_model_info = {
+            'name':llm_model,
+            'status': response['status'],
+            'input_token': response['input_token'],
+            'output_token': response['output_token']
+        }
 
     data = {
         "chatId": chatId,
@@ -17,12 +41,7 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
         "price": response['price'],
         "modelInfo": {
             'eachlabs_model': eachlabs_info,
-            'llm_models': {
-                'name':llm_model,
-                'status': response['status'],
-                'input_token': response['input_token'],
-                'output_token': response['output_token']
-            }
+            'llm_models': llm_model_info
         },
         "intend": intend,
         "runtime": runtime,
