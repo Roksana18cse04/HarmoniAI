@@ -12,7 +12,7 @@ client = weaviate.connect_to_custom(
     skip_init_checks=True
 )
 
-classes_to_delete = ["ContentItem", 'Product']
+classes_to_delete = ['Product']
 
 for class_name in classes_to_delete:
     try:

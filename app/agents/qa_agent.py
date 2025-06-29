@@ -73,7 +73,8 @@ def question_answer_agent(platform: str, model, prompt: str, full_prompt) -> str
                     response = summarize_content(platform,model, content, prompt)
                     price = price_calculate(platform, model, prompt, response)
                     return {
-                        "response": response,
+                        "status": response['status'],
+                        "output": response['content'],
                         "price": price['price'],
                         "input_token": price['input_token'],
                         "output_token": price['output_token']
@@ -87,7 +88,8 @@ def question_answer_agent(platform: str, model, prompt: str, full_prompt) -> str
         response = llm_answer(platform, model, full_prompt)
         price = price_calculate(platform,model, prompt, response)
         return {
-            "response": response,
+            "status": response['status'],
+            "output": response['content'],
             "price": price['price'],
             "input_token": price['input_token'],
             "output_token": price['output_token']

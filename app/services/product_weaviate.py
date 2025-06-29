@@ -73,6 +73,7 @@ def upsert_products_to_weaviate(products):
             properties={
                 "product_id": product["product_id"],
                 "title": product["title"],
+                "description": product['description'],
                 "color": product["color"],
                 "gender": product["gender"],
                 "price": product["price"],
@@ -137,6 +138,7 @@ def query_weaviate_products(user_prompt, top_k=10):
             product = {
                 "product_id": item.properties.get("product_id"),
                 "title": item.properties.get("title"),
+                "description": item.properties.get("description"),
                 "color": item.properties.get("color"),
                 "gender": item.properties.get("gender"),
                 "price": item.properties.get("price"),

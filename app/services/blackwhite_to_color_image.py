@@ -15,10 +15,7 @@ HEADERS = {
     "Content-Type": "application/json"
 }
 def drw_image_color_create_prediction(image_url: str, prompt: str):
-    response = requests.post(
-        "https://api.eachlabs.ai/v1/prediction/",
-        headers=HEADERS,
-        json={
+    playload = {
             "model": "sdxl-controlnet",
             "version": "0.0.1",
             "input": {
@@ -31,22 +28,26 @@ def drw_image_color_create_prediction(image_url: str, prompt: str):
             },
             "webhook_url": ""
         }
+        
+    response = requests.post(
+        "https://api.eachlabs.ai/v1/prediction/",
+        headers=HEADERS,
+        json=playload
     )
     prediction = response.json()
     
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     
-    return prediction["predictionID"]
+    return prediction,playload
 
 def draw_image_color(image_url: str, prompt: str):
     try:
-        prediction_id = drw_image_color_create_prediction(image_url, prompt)
+        response,model_info = drw_image_color_create_prediction(image_url, prompt)
        # Get result
+        prediction_id = response['predictionID']
         result = get_prediction(prediction_id)
-        # print(f"Output URL: {result['output']}")
-        # print(f"Processing time: {result['metrics']['predict_time']}s")
-        return result['output']
+        return result,model_info
     except Exception as e:
         print(f"Error: {e}")
 

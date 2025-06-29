@@ -15,44 +15,47 @@ HEADERS = {
 }
 
 def create_prediction_for_dress_trail(category:str,cloth_image_url: str, mask_iamge_url:str,human_image_url: str) -> str:
-    response = requests.post(
-        "https://api.eachlabs.ai/v1/prediction/",
-        headers=HEADERS,
-        json={
+    playload = {
             "model": "idm-vton",
             "version": "0.0.1",
             "input": {
-  "crop": False,
-  "seed": 42,
-  "steps": 30,
-  "category": category,
-  "force_dc": False,
-  "garm_img": cloth_image_url,
-  "mask_img": mask_iamge_url,
-  "human_img": human_image_url,
-  "mask_only": False,
-  "garment_des": "your garment des here"
+                "crop": False,
+                "seed": 42,
+                "steps": 30,
+                "category": category,
+                "force_dc": False,
+                "garm_img": cloth_image_url,
+                "mask_img": mask_iamge_url,
+                "human_img": human_image_url,
+                "mask_only": False,
+                "garment_des": "your garment des here"
             },
             "webhook_url": ""
         }
+    response = requests.post(
+        "https://api.eachlabs.ai/v1/prediction/",
+        headers=HEADERS,
+        json=playload
     )
     prediction = response.json()
     
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     
-    return prediction["predictionID"]
+    return prediction,playload
 def dress_trial(image_request: DressTrialImageRequest):
     try:
         # Use the image_url already provided (uploaded to Cloudinary in the route)
-        prediction_id = create_prediction_for_dress_trail(image_request.category,image_request.cloth_image_url, image_request.mask_image_url,image_request.human_image_url)
-        print(f"Prediction created: {prediction_id}")
+        response,model_info = create_prediction_for_dress_trail(image_request.category,image_request.cloth_image_url, image_request.mask_image_url,image_request.human_image_url)
+        # Create prediction
+        prediction_id = response['predictionID']
+        print(f"Prediction created: {response['predictionID']}")
 
         # Get result
         result = get_prediction(prediction_id)
         # print(f"Output URL: {result['output']}")
         # print(f"Processing time: {result['metrics']['predict_time']}s")
-        return result["output"]
+        return result,model_info
     except Exception as e:
         print(f"Error: {e}")
         

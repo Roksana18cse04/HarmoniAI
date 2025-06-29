@@ -10,6 +10,7 @@ router = APIRouter()
 
 @router.post("/voice-clone")
 async def voice_cloning(
+    user_id:str=Form(...),
     chat_id: str = Form(...),
     audio_file: UploadFile = File(...),
     eachlabs_model_name: str = Form(...),
@@ -26,27 +27,53 @@ async def voice_cloning(
     if result is None:
         raise HTTPException(status_code=500, detail="Voice cloning failed.")
 
-    response, model_info, llm_price = result
-    lprice = llm_price['price']
+    result_data, model_info, llm_price = result
+    
+    l_price = llm_price['price']
     input_tokens = llm_price['input_token']
     output_tokens = llm_price['output_token']
-    mprice = response['metrics']['cost']
-    price = lprice + mprice
+    
+    emodel_price = result_data['metrics']['cost']
+    total_price = l_price+emodel_price
+    runtime = result_data['metrics']['predict_time']
+    
+    status = result_data['status']
+    output = result_data['output']
+    
+    eachlabs_info = model_info
 
-    # store_generated_message(user_id, chat_id, prompt, response=)
+    response={
+        "status": status,
+        "output": output,
+        "price": total_price,
+        "input_token": input_tokens,
+        "output_token": output_tokens,
+            
+    }
+    store_generated_message(
+            userId=user_id, 
+            chatId=chat_id, 
+            prompt=prompt, 
+            response=response, 
+            intend=intend, 
+            runtime=runtime,
+            input_urls=audio_file_url,
+            eachlabs_info=eachlabs_info,
+            llm_model=llm_model
+    )
     return {
         "response": {
             'prompt': prompt,
-            "status": response['status'],
-            "result": response['output'],
-            "price": price
+            "status": result_data['status'],
+            "result": result_data['output'],
+            "price": total_price
         },
         "model_info": {
             'eachlabs_model_info': model_info,
-            'llm_model_info': llm_model
+            'llm_model_info': llm_model,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
         },
-        "input_tokens": input_tokens,
-        "output_tokens": output_tokens,
         "intend": intend,
-        "runtime": round(response['metrics']['predict_time'], 3)
+        "runtime": round(result_data['metrics']['predict_time'], 3)
     }

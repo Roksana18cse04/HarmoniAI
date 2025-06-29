@@ -121,41 +121,71 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
         }
     elif intent=="shopping":
         # if the category is shopping, use the shopping agent to get product info
-        shopping_result = shopping_agent(platform, model, prompt)
+        response = shopping_agent(platform, model, prompt)
+        runtime = round(time.time() - start_time, 3)
+        print("response------------", response)
+        # call a route to store message on database
+        store_generated_message(
+            userId=user_id, 
+            chatId=chat_id, 
+            prompt=prompt, 
+            response=response, 
+            intend=intent, 
+            runtime=runtime,
+            llm_model=model  
+        )
+
         return {
-            "user_prompt": prompt,
-            "response": shopping_result,
+            "prompt": prompt,
+            "response": response,
             "model_info": {
-                'llm_model_name': model,
+                'llm_model': {
+                    'name': model
+                }
             },
             "intend": "shopping",
-            "runtime": round( time.time()-start_time, 3)
+            "runtime": runtime
         }
     elif intent=="media-recommendation":
         response = media_agent(platform, model, prompt) 
         return {
-            "user_prompt": prompt,
+            "prompt": prompt,
             "response": response,
             "model_info": {
-                'llm_model_name': model
+                'llm_model':{
+                    'name':model,
+                }
             },
             "intend": "media-recommendation",
             "runtime": round( time.time()-start_time, 3)
         }     
     elif intent=="question-answering":
+        start_time = time.time()
         response= question_answer_agent(platform, model, prompt, full_prompt)
         print("result------", response)
+        runtime = round(time.time() - start_time, 3)
+        # call a route to store message on database
+        store_generated_message(
+            userId=user_id, 
+            chatId=chat_id, 
+            prompt=prompt, 
+            response=response, 
+            intend=intent, 
+            runtime=runtime,
+            llm_model=model  
+        )
         return {
             "user_prompt": prompt,
             "response": response,
             "model_info": {
-                'llm_model_name': model
+                'llm_models':{
+                    'name': model
+                }
             },
             "intend": "question-answering",
             "runtime": round( time.time()-start_time, 3)
         }
     elif intent=="caption-create":
-        start_time = time.time()
 
         # Step 1: Filter only image URLs
         image_urls = [
@@ -172,14 +202,18 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
         else:
             caption_text = "No valid image provided for caption generation."
 
+        runtime = round(time.time() - start_time, 3)
+
         return {
             "user_prompt": prompt,
             "response": caption_text,
             "model_info": {
-                'llm_model_name': model
+                'llm_models':{
+                    'name': model
+                }
             },
             "intend": "caption-create",
-            "runtime": round(time.time() - start_time, 3),
+            "runtime": runtime,
             "input_image_url": image_urls[0] if image_urls else None
         }
 
@@ -201,8 +235,13 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
             "user_prompt": prompt,
             "response": response['result'],
             "model_info": {
-                'llm_models': model,
-                'eachlabs_models': models
+                'eachlabs_models': {
+                    'model_list': models
+                },
+                'llm_models': {
+                    'name': model,
+                }
+                
             },
             "intend": "content-generate",
             "runtime": round( time.time()-start_time, 3)
@@ -223,7 +262,7 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
 
         return {
             "user_prompt": prompt,
-            "response": response['result'],
+            "response": response['output'],
             "price": response['price'],
             "model_info": {
                 'llm_models': {

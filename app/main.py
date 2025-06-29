@@ -54,6 +54,7 @@ try:
         print("Weaviate client connected successfully!")
     else:
         print("Weaviate client is not ready")
+        weaviate_client.connect()
 except Exception as e:
     print(f"Connection failed: {e}")
 

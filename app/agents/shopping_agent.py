@@ -30,8 +30,9 @@ The user asks: "{user_prompt}"
 **Task:**  
 1. Select **up to 5** best-matching products (fewer if not enough are relevant).  
 2. Return them as a **valid JSON array** with each item containing:  
-   - `product_id` (string)  
+   - `id` (string)  
    - `title` (string)  
+   - `description` (string)
    - `price` (string/number)  
    - `link` (string, URL)  
    - `image` (string, URL/path)  
@@ -45,8 +46,9 @@ Example output format:
 ```json
 [
     {{
-        "product_id": "12345",
+        "id": "12345",
         "title": "Product Name",
+        "description": Product Description,
         "price": "$19.99",
         "link": "https://example.com/product",
         "image": "https://example.com/image.jpg"
@@ -62,7 +64,7 @@ Example output format:
         response_text = json.loads( response.choices[0].message.content )
         price =  price_calculate("chatgpt", model, user_prompt, response_text)
         return {
-            "response": response_text,
+            "output": response_text,
             "price": price['price'],
             "input_token": price['input_token'],
             "output_token": price['output_token']

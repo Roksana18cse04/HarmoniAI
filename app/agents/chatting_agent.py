@@ -16,7 +16,7 @@ def generate_chat_msg(platform, model, prompt, history):
 
     return {
         "status": response['status'],
-        "result": response['content'],
+        "output": response['content'],
         "price": price['price'],
         "input_token": price['input_token'],
         "output_token": price['output_token']
