@@ -6,13 +6,31 @@ from app.agents.shopping_agent import shopping_agent
 from app.agents.media_agent import media_agent
 from app.agents.qa_agent import question_answer_agent 
 from app.agents.chatting_agent import generate_chat_msg
-from typing import Optional
-from fastapi import UploadFile
+from app.services.store_chat_message import store_generated_message
+import mimetypes
 import time
+
+
+def is_image_url(url: str) -> bool:
+    # Method 1: Check file extension (fallback)
+    # image_extensions = ('.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif', '.tiff', '.heic')
+    # if any(url.lower().endswith(ext) for ext in image_extensions):
+    #     return True
+
+    # Optional: Method 2 - HEAD request to detect Content-Type (requires requests lib)
+    # Slower but more accurate
+    try:
+        import requests
+        response = requests.head(url, timeout=2)
+        content_type = response.headers.get("Content-Type", "")
+        return content_type.startswith("image/")
+    except Exception:
+        return False
 
 def fetch_models(models_info, model_category):
     models_list = models_info["result"]["result"]["models"]
-    category_id = model_category["category_id"] 
+    print(model_category)
+    category_id = model_category["id"] 
     if category_id is not None:
         models = [{
             "title": model["title"], 
@@ -26,7 +44,8 @@ def fetch_models(models_info, model_category):
     print("models:------------------", models)      
     return models
 
-def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[UploadFile] = None):
+def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_prompt, youtube_url, file_urls):
+
     start_time = time.time()
     print("platform---------------", platform)
     # correct prompt spelling 
@@ -87,9 +106,10 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
     # classify the prompt using the models categories
     model_category = classify_prompt_agent(platform, model, prompt, categories_list)
     print("model_category:------------------", model_category)
+    intent = model_category['content']["intent"]
+    print("model_category['intent']:------------------", intent)
 
-    print("model_category['intent']:------------------", model_category["intent"])
-    if model_category["intent"]=="unknown":
+    if intent=="unknown":
         return {
             "user_prompt": prompt,
             "response": "Sorry, I can't help with that.",
@@ -99,7 +119,7 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "intend": "unknown",
             "runtime": round( time.time()-start_time, 3)
         }
-    elif model_category["intent"]=="shopping":
+    elif intent=="shopping":
         # if the category is shopping, use the shopping agent to get product info
         shopping_result = shopping_agent(platform, model, prompt)
         return {
@@ -111,7 +131,7 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "intend": "shopping",
             "runtime": round( time.time()-start_time, 3)
         }
-    elif model_category["intent"]=="media-recommendation":
+    elif intent=="media-recommendation":
         response = media_agent(platform, model, prompt) 
         return {
             "user_prompt": prompt,
@@ -122,7 +142,7 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "intend": "media-recommendation",
             "runtime": round( time.time()-start_time, 3)
         }     
-    elif model_category["intent"]=="question-answering":
+    elif intent=="question-answering":
         response= question_answer_agent(platform, model, prompt, full_prompt)
         print("result------", response)
         return {
@@ -134,12 +154,24 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "intend": "question-answering",
             "runtime": round( time.time()-start_time, 3)
         }
-    elif model_category['intent']=="caption-create":
-        # Use the file if provided and valid, otherwise pass None
-        if file is not None and (not hasattr(file, 'filename') or not file.filename):
-            file = None
-        # Run caption generation (prompt-only or image+prompt)
-        caption_text = caption_generator(platform, model, file, prompt)   
+    elif intent=="caption-create":
+        start_time = time.time()
+
+        # Step 1: Filter only image URLs
+        image_urls = [
+            url for url in file_urls
+            if is_image_url(url)
+        ]
+
+        # Step 2: Use the first image only for captioning
+        if image_urls:
+            try:
+                caption_text = caption_generator(platform, model, image_urls[0], prompt)
+            except Exception as e:
+                caption_text = f"Caption generation failed: {str(e)}"
+        else:
+            caption_text = "No valid image provided for caption generation."
+
         return {
             "user_prompt": prompt,
             "response": caption_text,
@@ -147,16 +179,19 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
                 'llm_model_name': model
             },
             "intend": "caption-create",
-            "runtime": round( time.time()-start_time, 3)
-        }  
-    elif model_category['intent'] == 'content-create':
+            "runtime": round(time.time() - start_time, 3),
+            "input_image_url": image_urls[0] if image_urls else None
+        }
+
+    
+    elif intent == 'content-create':
         response = generate_content_from_instruction(platform, model, prompt)
 
         # for image and vedio generation , send eachlabs models list
-        if response['media_type'] == 'image':
+        if 'image' in response['media_type']:
             category = next((category for category in categories_list if category.get('slug') == 'text-to-image'), None)
             models = fetch_models(models_info, category)
-        elif response['media_type'] == 'vedio':
+        elif 'vedio' in response['media_type']:
             category = next((category for category in categories_list if category.get('slug') == 'text-to-vedio'), None)
             models = fetch_models(models_info, category)
         else:
@@ -166,22 +201,40 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
             "user_prompt": prompt,
             "response": response['result'],
             "model_info": {
-                'llm_model_name': model,
+                'llm_models': model,
                 'eachlabs_models': models
             },
             "intend": "content-generate",
             "runtime": round( time.time()-start_time, 3)
         }
-    elif model_category['intent'] == 'chat':
+    elif intent == 'chat':
         response = generate_chat_msg(platform, model, prompt, full_prompt)
+        runtime = round( time.time()-start_time, 3)
+        # call a route to store message on database
+        store_generated_message(
+            userId=user_id, 
+            chatId=chat_id, 
+            prompt=prompt, 
+            response=response, 
+            intend=intent, 
+            runtime=runtime,
+            llm_model=model  
+        )
+
         return {
             "user_prompt": prompt,
-            "response": response,
+            "response": response['result'],
+            "price": response['price'],
             "model_info": {
-                'llm_model_name': model
+                'llm_models': {
+                    'name': model,
+                    'status': response['status'],
+                    'input_token': response['input_token'],
+                    'output_token': response['output_token']
+                }
             },
-            "intend": "chatting",
-            "runtime": round( time.time()-start_time, 3)
+            "intend": "chat",
+            "runtime": runtime
         }
     else:
         # fetch models based on the classified category
@@ -196,6 +249,6 @@ def run_multi_agent_chain( platform, model, prompt, full_prompt, file:Optional[U
         return {
             "user_prompt": prompt,
             "eachlabs_models": models,
-            "intend": model_category['intent'],
+            "intend": intent,
             # "runtime": round( time.time()-start_time, 3)
         }

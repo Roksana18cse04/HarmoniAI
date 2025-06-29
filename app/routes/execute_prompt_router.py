@@ -1,18 +1,17 @@
 from fastapi import APIRouter, File, UploadFile, Depends, Form
-from typing import Optional, Union
+from typing import Optional, Union, List
 from app.agents.chaining_agent import run_multi_agent_chain
 from app.services.correct_symspell import correct_spelling
 from app.schemas.input import InputRequest
+from app.utils.r2_uploader import upload_to_r2
+import uuid
 import requests
+import mimetypes
 router = APIRouter()
 
 def get_history(chatId, prompt):
     api_url = f"https://harmoniai-backend.onrender.com/api/v1/conversations/{chatId}"
-    token= "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI2ODRhNzZiMzM3MjEzYzA0ODExNjQ0MmQiLCJyb2xlIjoiYWRtaW4iLCJpYXQiOjE3NTAwNDI3MzksImV4cCI6MTgzNjQ0MjczOX0.23FDVEKnEE3bvgD-CRjvV1apGuqNtsZnecCbf3g9uA4"
-    headers= {
-        "Authorization": token
-    }
-    res = requests.get(api_url, headers=headers)
+    res = requests.get(api_url)
     res.raise_for_status()
     data = res.json()
     # Step 1: Extract chat history
@@ -35,24 +34,53 @@ def get_history(chatId, prompt):
 
 @router.post("/execute-prompt")
 async def execute_prompt(
+    user_id: str = Form(...), 
     chat_id: str = Form(...),
     model: str = Form(...),
     prompt: str = Form(...),
-    file: Optional[Union[UploadFile, str]] = File(None)
+    youtube_url: Optional[str] = Form(None),  # <-- YouTube URL comes from a separate form field
+    files: Optional[List[Union[UploadFile, str]]] = File(None)  # Multiple uploaded files 
 ):
-    processed_file = None
+    file_urls = []
     
-    if file is not None:
-        if isinstance(file, UploadFile) and file.filename:
-            processed_file = file
-        elif isinstance(file, str) and file.strip():
-            # Handle string case - maybe it's a file path or base64?
-            print(f"Received string instead of file: {file}")
-            # You might want to convert string to UploadFile or handle differently
+    # Process uploaded files (image/audio/video/pdf/etc.)
+    if files:
+        for file in files:
+            # Skip string inputs or empty values (Swagger may send "")
+            if isinstance(file, str) or not file:
+                continue
+            try:
+                if file and file.filename:
+                    file_bytes = await file.read()
+                    content_type = file.content_type or mimetypes.guess_type(file.filename)[0] or ""
+
+                    # Detect extension
+                    ext = file.filename.split('.')[-1].lower() if '.' in file.filename else ''
+                    if not ext and content_type:
+                        ext = mimetypes.guess_extension(content_type) or 'bin'
+                        ext = ext.lstrip('.')
+
+                    # Determine folder by type
+                    if "image" in content_type:
+                        folder = "images"
+                    elif "audio" in content_type:
+                        folder = "audios"
+                    elif "video" in content_type:
+                        folder = "videos"
+                    elif "pdf" in content_type or file.filename.lower().endswith(".pdf"):
+                        folder = "pdfs"
+                    else:
+                        folder = "misc"
+
+                    object_key = f"{folder}/{uuid.uuid4()}.{ext}"
+                    url = upload_to_r2(file_bytes, object_key)
+                    file_urls.append(url)
+            except Exception as e:
+                print(f"File upload failed: {str(e)}")
 
     prompt= correct_spelling(prompt)
     platform, full_prompt= get_history(chat_id, prompt)        
     
-    result = run_multi_agent_chain(platform, model, prompt, full_prompt, processed_file)
+    result = run_multi_agent_chain(user_id,chat_id, platform, model, prompt, full_prompt,youtube_url, file_urls)
     return result
     
