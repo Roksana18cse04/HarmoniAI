@@ -64,6 +64,7 @@ Example output format:
         response_text = json.loads( response.choices[0].message.content )
         price =  price_calculate("chatgpt", model, user_prompt, response_text)
         return {
+            "status": "success",
             "output": response_text,
             "price": price['price'],
             "input_token": price['input_token'],

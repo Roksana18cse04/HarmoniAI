@@ -46,7 +46,6 @@ def process_content_for_weaviate(content: Dict, category_map: Dict) -> Dict:
     processed = {
         "title": content.get("title", ""),
         "category": category_title,
-
         "genre_list": (
             [g.get("title", "").lower() for g in content.get("details", {}).get("genres", [])]
             if category_title in ['Kitab', 'Müzik'] else
@@ -136,6 +135,7 @@ def generate_content_embeddings(items: list[dict]) -> list[tuple[dict, list[floa
 
     for item in items:
         text_input = " ".join([
+            item.get("id", ""),
             item.get("title", ""),
             item.get("category", ""),
             ", ".join(item.get("genre_list", [])),
@@ -203,9 +203,9 @@ def import_content_to_weaviate(data, category_map):
                     for error in response.errors:
                         logger.error(f"Batch {i // BATCH_SIZE + 1} error: {error}")
                 else:
-                    logger.info(f"✅ Successfully imported {len(data_objects)} items in batch {i // BATCH_SIZE + 1}")
+                    logger.info(f"Successfully imported {len(data_objects)} items in batch {i // BATCH_SIZE + 1}")
             except Exception as e:
-                logger.warning(f"⚠️ Batch insert failed for batch {i // BATCH_SIZE + 1}: {e}")
+                logger.warning(f"Batch insert failed for batch {i // BATCH_SIZE + 1}: {e}")
                 logger.info("Attempting individual fallback insert...")
                 success = 0
                 for item, vec in item_vector_pairs:
@@ -215,7 +215,7 @@ def import_content_to_weaviate(data, category_map):
                         success += 1
                     except Exception as ind_e:
                         logger.error(f"Failed individual insert: {item.get('title', 'Unknown')} - {ind_e}")
-                logger.info(f"✅ Individually imported {success}/{len(item_vector_pairs)} items in batch {i // BATCH_SIZE + 1}")
+                logger.info(f"Individually imported {success}/{len(item_vector_pairs)} items in batch {i // BATCH_SIZE + 1}")
 
     except Exception as e:
         logger.error(f"Import process failed: {e}")
