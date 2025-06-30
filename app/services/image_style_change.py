@@ -17,40 +17,40 @@ HEADERS = {
 }
 # 3d,realistic_style,angel,anime_style,japanese_comics,princess_style,dreamy,ink_style,new_monet_garden,monets_garden,exquisite_comic,cyber_machinery,chinese_style,romantic,ugly_clay,cute_doll,3d_gaming,animated_movie,doll",
 def create_style_prediction(style_slug, image_url):
-    print(image_url)
-    print(style_slug)
+    playload = {
+        "model": "bytedance",
+        "version": "0.0.1",
+        "input": {
+            "style": style_slug,
+            "image_url": image_url
+        },
+        "webhook_url": ""
+    }
     response = requests.post(
         "https://api.eachlabs.ai/v1/prediction/",
         headers=HEADERS,
-        json={
-            "model": "bytedance",
-            "version": "0.0.1",
-            "input": {
-                "style": style_slug,
-                "image_url": image_url
-            },
-            "webhook_url": ""
-        }
+        json=playload
     )
     prediction = response.json()
     
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     
-    return prediction["predictionID"]
+    return prediction,playload
 
 def style_change(style_slug: str, image_url: str):
     
     try:
         # Create prediction
-        prediction_id = create_style_prediction(style_slug, image_url)
+        response,model_info = create_style_prediction(style_slug, image_url)
+        prediction_id = response['predictionID']
         print(f"Prediction created: {prediction_id}")
         
         # Get result
         result = get_prediction(prediction_id)
         print(f"Output URL: {result['output']}")
         print(f"Processing time: {result['metrics']['predict_time']}s")
-        return result['output']
+        return result,model_info
     except Exception as e:
         print(f"Error: {e}")
 

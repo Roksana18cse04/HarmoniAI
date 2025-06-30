@@ -16,40 +16,41 @@ HEADERS = {
 }
 
 def create_prediction_baby_image(Father_image_url:str,gender:str,mother_image_url):
-    response = requests.post(
-        "https://api.eachlabs.ai/v1/prediction/",
-        headers=HEADERS,
-        json={
+    playload = {
             "model": "each-baby",
             "version": "0.0.1",
             "input": {
-  "seed": 9999,
-  "image": Father_image_url,
-  "steps": 25,
-  "width": 512,
-  "gender": gender,
-  "height": 728,
-  "image2": mother_image_url,
-},
+                "seed": 9999,
+                "image": Father_image_url,
+                "steps": 25,
+                "width": 512,
+                "gender": gender,
+                "height": 728,
+                "image2": mother_image_url,
+            },
         "webhook_url": ""
     }
+    response = requests.post(
+        "https://api.eachlabs.ai/v1/prediction/",
+        headers=HEADERS,
+        json=playload
     )
     prediction = response.json()
     
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     
-    return prediction["predictionID"]
+    return prediction,playload
 
 def baby_face(man_image_url,gender,Women_image_url):
     try:
-        prediction_id = create_prediction_baby_image(man_image_url,gender,Women_image_url)
-        print(f"Prediction created: {prediction_id}")
+        response,model_info = create_prediction_baby_image(man_image_url,gender,Women_image_url)
+        print(f"Prediction created: {response['predictionID']}")
+        # Create prediction
+        prediction_id = response['predictionID']
         # Get result
         result = get_prediction(prediction_id)
-        print(f"Output URL: {result['output']}")
-        print(f"Processing time: {result['metrics']['predict_time']}s")
-        return result['output']
+        return result,model_info
     except Exception as e:
         print(f"Error: {e}")
         return e

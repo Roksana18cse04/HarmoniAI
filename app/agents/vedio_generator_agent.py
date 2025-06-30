@@ -17,7 +17,6 @@ def text_to_video_generate(data:TextToVideoRequest):
     try:
         response,model_info = create_prediction( data.prompt, data.eachlabs_model_name, data.duration)
         prediction_id = response["predictionID"]
-        
         result = get_prediction(prediction_id)
         intend = data.intend
         url = result['output']

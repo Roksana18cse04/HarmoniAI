@@ -1,7 +1,7 @@
 from app.services.fetch_models_info import fetch_models_info
 from app.agents.classifier_agent import classify_prompt_agent
-from app.agents.image_caption_agent import caption_generator
 from app.agents.content_creator_agent import generate_content_from_instruction
+from app.agents.image_caption_agent import generate_caption_from_instruction
 from app.agents.shopping_agent import shopping_agent  
 from app.agents.media_agent import media_agent
 from app.agents.qa_agent import question_answer_agent 
@@ -203,21 +203,32 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
             url for url in file_urls
             if is_image_url(url)
         ]
-
+        print("image_urls-------------", image_urls)
         # Step 2: Use the first image only for captioning
-        if image_urls:
-            try:
-                caption_text = caption_generator(platform, model, image_urls[0], prompt)
-            except Exception as e:
-                caption_text = f"Caption generation failed: {str(e)}"
-        else:
-            caption_text = "No valid image provided for caption generation."
+        try:
+            if image_urls:
+                image_url=image_urls[0]
+            else: image_url= None
 
-        runtime = round(time.time() - start_time, 3)
+            response = generate_caption_from_instruction(platform, model, prompt, image_url)
+            runtime = round(time.time() - start_time, 3)
+            # call a route to store message on database
+            store_generated_message(
+                userId=user_id, 
+                chatId=chat_id, 
+                prompt=prompt, 
+                response=response, 
+                intend=intent, 
+                runtime=runtime,
+                input_urls=image_url,
+                llm_model=model  
+            )
+        except Exception as e:
+                raise Exception(f"Caption generation failed: {str(e)}")
 
         return {
             "user_prompt": prompt,
-            "response": caption_text,
+            "response": response,
             "model_info": {
                 'llm_models':{
                     'name': model
@@ -241,10 +252,21 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
             models = fetch_models(models_info, category)
         else:
             models=[]
-        
+        runtime = round( time.time()-start_time, 3)
+        # call a route to store message on database
+        store_generated_message(
+            userId=user_id, 
+            chatId=chat_id, 
+            prompt=prompt, 
+            response=response['data'], 
+            intend=intent, 
+            runtime=runtime,
+            llm_model=model  
+        )
+
         return {
             "user_prompt": prompt,
-            "response": response['result'],
+            "response": response['data'],
             "model_info": {
                 'eachlabs_models': {
                     'model_list': models
