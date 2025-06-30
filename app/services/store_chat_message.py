@@ -1,6 +1,6 @@
 import requests
 def store_generated_message(userId, chatId, prompt, response, intend, runtime, input_urls=[], eachlabs_info=None, llm_model=None):
-    print("response----------", response)
+    print('response in storing----------', response)
     inputs = [{"type": "text", "content": prompt}]
     responses=[]
     if intend=='caption-create':
@@ -28,22 +28,38 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
     elif intend == 'pdf-to-text':
         inputs.append({"type": "pdf", "content": input_urls})
         responses.append({'type': 'text', 'content': response['output']})
-    elif intend=='shopping':
-        responses.append({ 
+    elif intend=='shopping' or intend=='media-recommendation':
+        card_items = []
+        for item in response['output']:
+            # Extract numeric value from "799.00 TRY"
+            numeric_price=0.0
+            if intend=='shopping':
+                try:
+                    price_str = item['price']
+                    numeric_price = float(price_str.split()[0])  # '799.00' from '799.00 TRY'
+                except (ValueError, IndexError):
+                    numeric_price = 0.0  # fallback if format is invalid
+
+            card_items.append({
+                "id": item['id'],
+                "title": item['title'],
+                "description": item['description'],
+                "type": "image",
+                "image": item['image'],
+                "file": item['link'],
+                "rating": float(item.get('rating', 0.0)),  # 0 or default if missing
+                "duration": float(item.get('duration', 0.0)),
+                "price": numeric_price  
+            })
+                    
+        responses.append({
             "type": "card",
             "isCard": True,
-            "cardContent": [
-                {
-                    "id":response['output']['id'],
-                    "title": response['output']['title'],
-                    "description": response['output']['description'],
-                    "type": "image",
-                    "file": response['output']['link'],
-                    "image": response['output']['image'],
-                    "price": response['output']['price']
-                }]   
-            })
+            "cardContent": card_items
+        })
     print(f"----------------------------------------")
+        
+        
     llm_model_info=None
     if llm_model:
         llm_model_info = {
@@ -66,7 +82,7 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
         "prompt": inputs,
         "response": responses
     }
-
+    print('data------------', data)
     try:
         r = requests.post("https://harmoniai-backend.onrender.com/api/v1/conversations/add-message", json=data)
         print("Stored message:", r.json())

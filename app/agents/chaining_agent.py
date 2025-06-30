@@ -148,6 +148,17 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
         }
     elif intent=="media-recommendation":
         response = media_agent(platform, model, prompt) 
+        runtime = round(time.time() - start_time, 3)
+        # call a route to store message on database
+        store_generated_message(
+            userId=user_id, 
+            chatId=chat_id, 
+            prompt=prompt, 
+            response=response, 
+            intend=intent, 
+            runtime=runtime,
+            llm_model=model  
+        )
         return {
             "prompt": prompt,
             "response": response,
@@ -157,7 +168,7 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
                 }
             },
             "intend": "media-recommendation",
-            "runtime": round( time.time()-start_time, 3)
+            "runtime": runtime
         }     
     elif intent=="question-answering":
         start_time = time.time()

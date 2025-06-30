@@ -61,7 +61,7 @@ except Exception as e:
 @app.on_event("startup")
 async def startup_event():
     setup_schema()
-    # fetch_all_media()
+    #  fetch_all_media()
 
 @app.on_event("shutdown")
 def shutdown_event():
