@@ -4,11 +4,13 @@ from openai import OpenAI
 # from app.services.xml_to_faiss import query_products  # Your existing XML parser
 from app.services.product_weaviate import query_weaviate_products
 from app.services.price_calculate import price_calculate
+from app.services.llm_provider import LLMProvider
 import json
 
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 client = OpenAI(api_key=OPENAI_API_KEY)
+
 
 # === SHOPPING AGENT ===
 def shopping_agent(platform, model, user_prompt):
@@ -55,13 +57,16 @@ Example output format:
     }}
 ]
 """
-    response = client.chat.completions.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.3,
-    )
+    # response = client.chat.completions.create(
+    #     model="gpt-4",
+    #     messages=[{"role": "user", "content": prompt}],
+    #     temperature=0.3,
+    # )
+    llm = LLMProvider(platform, model)
+    response = llm.generate_response("", prompt)
+    print(response)
     try:
-        response_text = json.loads( response.choices[0].message.content )
+        response_text = json.loads( response )
         price =  price_calculate("chatgpt", model, user_prompt, response_text)
         return {
             "status": "success",
