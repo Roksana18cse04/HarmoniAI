@@ -1,15 +1,27 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File,Form
 from fastapi.responses import JSONResponse
 from app.config import AUDIO_DIR, VIDEO_DIR, OUTPUT_DIR_VIDEO
 from app.services.merge_audio_video import merge_audio_video
+from app.routes.execute_prompt_router import get_history
+from app.services.store_chat_message import store_generated_message
 from app.utils.r2_uploader import upload_to_r2
 import os
-
+import mimetypes
+import time
 router = APIRouter()
 
 @router.post("/merge-audio-video")
-async def merge_audio_video_route(audio_file: UploadFile = File(...), video_file: UploadFile = File(...)):
+async def merge_audio_video_route(
+    user_id: str=Form(...),
+    chat_id:str=Form(...),  
+    prompt:str=Form(...),
+    audio_file: UploadFile = File(...), 
+    video_file: UploadFile = File(...),
+    intend : str = Form(...)
+):
     # Read and upload audio
+    start_time = time.time()
+    platform, full_prompt = get_history(chat_id, prompt)
     audio_bytes = await audio_file.read()
     audio_r2_url = upload_to_r2(audio_bytes, f"audio/{audio_file.filename}")
     print(f"R2 Audio URL: {audio_r2_url}")
@@ -31,6 +43,8 @@ async def merge_audio_video_route(audio_file: UploadFile = File(...), video_file
     # Merge audio and video
     output_path = os.path.join(OUTPUT_DIR_VIDEO, video_file.filename)
     output_video_path = merge_audio_video(audio_path, video_path, output_path)
+    
+    
 
     try:
         with open(output_video_path, "rb") as f:
@@ -40,13 +54,33 @@ async def merge_audio_video_route(audio_file: UploadFile = File(...), video_file
         os.remove(audio_path)
         os.remove(video_path)
         os.remove(output_video_path)
-   
-
+        runtime = round(time.time() - start_time, 3)
+        status ={
+            "message": "Audio and video merged successfully"
+        }
+        response={
+            "status":status["message"],
+            "output": output_video_r2_url,
+            "price": 0.0,            
+        }
+        input_urls=[audio_r2_url,video_r2_url]
+        store_generated_message(
+            userId=user_id, 
+            chatId=chat_id, 
+            prompt=prompt, 
+            response=response, 
+            intend=intend, 
+            runtime=runtime,
+            input_urls=input_urls,
+        )
         return {
             "message": "Audio and video merged successfully",
             "base_audio_url": audio_r2_url,
             "base_video_url": video_r2_url,
-            "output_video_url": output_video_r2_url
+            "output": output_video_r2_url,
+            "price":response["price"],
+            "runtime": runtime,
+            "intend":intend
         }
 
     except Exception as e:
