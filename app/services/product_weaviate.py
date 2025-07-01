@@ -87,6 +87,8 @@ def upsert_products_to_weaviate(products):
     # Chunk and insert in batches to avoid timeout
     for i, chunk in enumerate(chunked(data_objects, max_batch_size)):
         try:
+            if not client.is_connected():
+                client.connect()
             response = product_collection.data.insert_many(chunk)
             if response.has_errors:
                 print(f"Batch {i+1} had {len(response.errors)} errors:")
@@ -179,10 +181,10 @@ def deduplicate_products(products):
 def fetch_all_products():  
     urls = [
         "https://www.kappa-tr.com/feed/standartV3",
-        # "https://tr.ecco.com/feed/googleV2",
-        # "https://www.suvari.com.tr/feed/googleV2",
-        # "https://www.alvinaonline.com/tr/p/XMLProduct/GoogleMerchantXML",
-        # "https://www.perspective.com.tr/feed/facebook",
+        "https://tr.ecco.com/feed/googleV2",
+        "https://www.suvari.com.tr/feed/googleV2",
+        "https://www.alvinaonline.com/tr/p/XMLProduct/GoogleMerchantXML",
+        "https://www.perspective.com.tr/feed/facebook",
     ]
 
     all_products = []

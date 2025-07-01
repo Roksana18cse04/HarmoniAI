@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, Request
 from fastapi_mcp import FastApiMCP
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
@@ -14,20 +14,38 @@ ALGORITHM = "HS256"
 security = HTTPBearer()
 
 def verify_token(token: str):
+    print(token)
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
         return None
 
-def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    token = credentials.credentials
-    payload = verify_token(token)
-    if not payload:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
-        )
-    return payload
+def get_current_user(request: Request):
+    auth_header = request.headers.get("Authorization")
+    print("Header:", auth_header)
+    
+    if auth_header.startswith("Bearer "):
+        token = auth_header.split(" ")[1]
+    else:
+        token = auth_header
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        print("Payload:", payload)
+        return payload
+    except JWTError as e:
+        print("JWT Error:", e)
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+    # token = credentials.credentials
+    # payload = verify_token(token)
+    # print("payload------------",payload)
+    # if not payload:
+    #     raise HTTPException(
+    #         status_code=status.HTTP_401_UNAUTHORIZED,
+    #         detail="Invalid or expired token",
+    #     )
+    # return payload
 
 # ─────────────────────────────────────────────────────────────────────────────
 # App Setup
@@ -96,8 +114,8 @@ except Exception as e:
 async def startup_event():
     weaviate_client.connect()
     setup_schema()
-    scheduler.add_job(fetch_all_media_async, 'interval', seconds=60)  # প্রতি 60 সেকেন্ডে রান করবে
-    scheduler.add_job(fetch_all_products_async, 'interval', seconds=60)
+    scheduler.add_job(fetch_all_media_async, 'interval', hours=6) 
+    scheduler.add_job(fetch_all_products_async, 'interval', hours=6)
     scheduler.start()
 
 @app.on_event("shutdown")
@@ -115,10 +133,10 @@ def shutdown_event():
 async def root():
     return {"message": "Welcome to the Multi-Agent System!"}
 
-# Secure route with JWT
-@app.get("/secure-status")
-async def secure_status(user: dict = Depends(get_current_user)):
-    return {"message": "Secure access granted!", "user": user}
+# # Secure route with JWT
+# @app.get("/secure-status")
+# async def secure_status(user: dict = Depends(get_current_user)):
+#     return {"message": "Secure access granted!", "user": user}
 
 
 def main():

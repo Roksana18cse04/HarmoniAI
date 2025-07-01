@@ -236,6 +236,8 @@ def import_content_to_weaviate(data, category_map):
 
                 data_objects = [DataObject(properties=item, vector=vec) for item, vec in item_vector_pairs]
                 try:
+                    if not weaviate_client.is_connected():
+                        weaviate_client.connect()
                     response = content_collection.data.insert_many(data_objects)
                     if response.has_errors:
                         for error in response.errors:
@@ -246,6 +248,8 @@ def import_content_to_weaviate(data, category_map):
                     logger.warning(f"Batch insert failed: {e}")
                     for item, vec in item_vector_pairs:
                         try:
+                            if not weaviate_client.is_connected():
+                                weaviate_client.connect()
                             content_collection.data.insert(properties=item, vector=vec)
                         except Exception as ind_e:
                             logger.error(f"Failed to insert: {item.get('title', 'Unknown')} - {ind_e}")
