@@ -4,14 +4,19 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
     inputs = [{"type": "text", "content": prompt}]
     responses=[]
     if intend=='caption-create':
-        inputs.append({"type": "image", "content": input_urls})
-    elif intend=='chat' or intend=='question-answering':
+        if input_urls: 
+            inputs.append({"type": "image", "content": input_urls})
+        responses.append({'type': 'text', 'content': response['output']})
+    elif intend=='chat' or intend=='question-answering' or intend=='content-create':
         responses.append({'type': 'text', 'content': response['output']})
     elif intend=='chat':
         responses.append({'type': 'text', 'content': response['result']})
     elif intend=='image-to-image':
         responses.append({'type': 'image', 'content': response['output']})
-        responses.append({'type': 'image', 'content': response['output']})
+    elif intend=='image-to-video':
+        inputs.append({"type": "image", "content": input_urls})
+        inputs.append({"type": "audio", "content": input_urls})
+        responses.append({'type': 'video', 'content': response['output']})
     elif intend == 'voice-to-voice':
         inputs.append({"type": "audio", "content": input_urls})
         responses.append({'type': 'audio', 'content': response['output']})
@@ -19,15 +24,18 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
         inputs.append({"type": "audio", "content": input_urls})
         responses.append({'type': 'audio', 'content': response['output']})
     elif intend == 'text-to-image':
-        responses.append({'type': 'image', 'content': response['output']})
+        responses.append({'type': 'image', 'content': response['output'][0]})
     elif intend == 'text-to-video':
         responses.append({'type': 'video', 'content': response['output']})
+    elif intend == 'text-to-voice':
+        responses.append({'type': 'audio', 'content': response['output']})
     elif intend == 'video-to-text':
         inputs.append({"type": "video", "content": input_urls})
         responses.append({'type': 'text', 'content': response['output']})
     elif intend == 'pdf-to-text':
         inputs.append({"type": "pdf", "content": input_urls})
         responses.append({'type': 'text', 'content': response['output']})
+
     elif intend=='shopping' or intend=='media-recommendation':
         card_items = []
         for item in response['output']:
@@ -60,6 +68,7 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
     print(f"----------------------------------------")
         
         
+    
     llm_model_info=None
     if llm_model:
         llm_model_info = {

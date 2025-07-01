@@ -10,7 +10,8 @@ import mimetypes
 router = APIRouter()
 
 def get_history(chatId, prompt):
-    api_url = f"https://harmoniai-backend.onrender.com/api/v1/conversations/{chatId}"
+    print("call get_history---------------")
+    api_url = f"https://harmoniai-backend.onrender.com/api/v1/conversations/{chatId}?limit=10"
     res = requests.get(api_url)
     res.raise_for_status()
     data = res.json()
@@ -80,7 +81,6 @@ async def execute_prompt(
 
     prompt= correct_spelling(prompt)
     platform, full_prompt= get_history(chat_id, prompt)        
-    
     result = run_multi_agent_chain(user_id,chat_id, platform, model, prompt, full_prompt,youtube_url, file_urls)
     return result
     

@@ -48,8 +48,9 @@ Your job is to:
     price = price_calculate(platform, model, instruction, text_response['content'])
     return {
         "media_type": analysis['content']['media_types'],
-        "result":{
-            "response": text_response,
+        "data":{
+            "status": text_response['status'],
+            "output": text_response["content"],
             "price": price['price'],
             "input_token": price['input_token'],
             "output_token": price['output_token']

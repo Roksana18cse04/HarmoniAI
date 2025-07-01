@@ -15,13 +15,13 @@ router = APIRouter()
 @router.post("/text-image-generate")
 def image_generate(data: TextToImageRequest):
     try:
-        platform, full_prompt = get_history(data.prompt, data.eachlabs_model_name)
+        platform, full_prompt = get_history(data.chat_id, data.prompt)
         response, model_info = text_to_generate_image(data)
         intend = data.intend
         runtime = round(response['metrics']['predict_time'], 3)
         response_data = {
             "status": response['status'],
-            "result": response['output'],
+            "output": response['output'],
             "price": response['metrics']['cost']
         }
 

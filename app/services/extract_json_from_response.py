@@ -19,7 +19,7 @@ def extract_json_from_llm(raw):
     raw = raw.strip()
 
     # Remove markdown fences ```json ... ```
-    cleaned = re.sub(r"^```json\s*|^```|```$", "", raw, flags=re.DOTALL).strip()
+    cleaned = re.sub(r"^```json\s*|^```|```$", "", raw, flags=re.MULTILINE).strip()
 
     # Try full JSON parse (object or array)
     if cleaned.startswith("{") or cleaned.startswith("["):
