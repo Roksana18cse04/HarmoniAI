@@ -16,28 +16,29 @@ def media_agent(platform, model, user_prompt):
     ])
 
     prompt = f"""You are a helpful media assistant.  
-Here is a list of relevant content items:  
-{media_text}  
+        Here is a list of relevant content items:  
+        {media_text}  
 
-The user asks: "{user_prompt}"  
+        The user asks: "{user_prompt}"  
+        - Behave like as multilangual 
 
-**Task:**  
-1. Select **up to 3** best-matching items (fewer if not enough are relevant).  
-2. Return them as a **valid JSON array** with each item containing:  
-    - `id` (string)
-    - `title` (string)  
-    - `description` (string)  
-    - `rating` (number)  
-    - `image` (string, URL/path)  
-    - `link` (string, URL)  
-    - `duration` (string)  
+        **Task:**  
+        1. Select **up to 3** best-matching items (fewer if not enough are relevant).  
+        2. Return them as a **valid JSON array** with each item containing:  
+            - `id` (string)
+            - `title` (string)  
+            - `description` (string)  
+            - `rating` (number)  
+            - `image` (string, URL/path)  
+            - `link` (string, URL)  
+            - `duration` (string)  
 
-### Rules:
-- Only include items that are relevant to the user's query.
-- If no items are relevant, return an empty JSON array: `[]`.
-- Your response **must be valid JSON only** — no explanations, comments, or markdown formatting. 
+        ### Rules:
+        - Only include items that are relevant to the user's query.
+        - If no items are relevant, return an empty JSON array: `[]`.
+        - Your response **must be valid JSON only** — no explanations, comments, or markdown formatting. 
 
-"""
+        """
     # response = client.chat.completions.create(
     #     model="gpt-4",
     #     messages=[{"role": "user", "content": prompt}],

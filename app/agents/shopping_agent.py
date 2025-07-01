@@ -24,39 +24,40 @@ def shopping_agent(platform, model, user_prompt):
     ])
 
     prompt = f"""You are a helpful shopping assistant.  
-Here is a list of relevant products:  
-{product_text}  
+        Here is a list of relevant products:  
+        {product_text}  
 
-The user asks: "{user_prompt}"  
+        The user asks: "{user_prompt}" 
+        -Behave like as multilangual 
 
-**Task:**  
-1. Select **up to 5** best-matching products (fewer if not enough are relevant).  
-2. Return them as a **valid JSON array** with each item containing:  
-   - `id` (string)  
-   - `title` (string)  
-   - `description` (string)
-   - `price` (string/number)  
-   - `link` (string, URL)  
-   - `image` (string, URL/path)  
+        **Task:**  
+        1. Select **up to 5** best-matching products (fewer if not enough are relevant).  
+        2. Return them as a **valid JSON array** with each item containing:  
+        - `id` (string)  
+        - `title` (string)  
+        - `description` (string)
+        - `price` (string/number)  
+        - `link` (string, URL)  
+        - `image` (string, URL/path)  
 
-**Rules:**  
-- Only include products that truly match the query.  
-- If no products match, return an empty array `[]`.  
-- Respond **ONLY with JSON**, no additional text.  
+        **Rules:**  
+        - Only include products that truly match the query.  
+        - If no products match, return an empty array `[]`.  
+        - Respond **ONLY with JSON**, no additional text.  
 
-Example output format:  
-```json
-[
-    {{
-        "id": "12345",
-        "title": "Product Name",
-        "description": Product Description,
-        "price": "$19.99",
-        "link": "https://example.com/product",
-        "image": "https://example.com/image.jpg"
-    }}
-]
-"""
+        Example output format:  
+        ```json
+        [
+            {{
+                "id": "12345",
+                "title": "Product Name",
+                "description": Product Description,
+                "price": "$19.99",
+                "link": "https://example.com/product",
+                "image": "https://example.com/image.jpg"
+            }}
+        ]
+        """
     # response = client.chat.completions.create(
     #     model="gpt-4",
     #     messages=[{"role": "user", "content": prompt}],

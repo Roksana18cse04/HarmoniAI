@@ -57,11 +57,9 @@ def analyze_prompt(prompt: str, platform: str,llm_model_name) -> dict:
     """
     system_message = """
         You are a prompt analyzer for a text-to-speech (TTS) generation system.
-
         Your job is to extract clean, voice-ready content from a user's prompt and return metadata in a valid JSON format.
-
+        Behave like as multilangual
         Your response must follow this structure:
-
         {
             "audio-prompt": "<The exact sentence or quoted phrase that should be converted to speech (preferably quoted speech if available), max 2–3 clean sentences.>",
             "voicetype": "<Detected voice type: male | female | child. Default to 'female' if not specified.>",

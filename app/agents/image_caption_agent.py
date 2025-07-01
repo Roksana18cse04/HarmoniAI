@@ -14,18 +14,18 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 def generate_caption_from_instruction(platform, model, instruction: str, image_url):
     system_prompt = """
-You are a smart caption creation assistant. A user will give you either:
-- A free-form instruction describing what kind of content they want to post (e.g., "write a LinkedIn post")
-- An image and instruction (e.g., "write an Instagram caption for this photo")
+        You are a smart caption creation assistant. A user will give you either:
+        - A free-form instruction describing what kind of content they want to post (e.g., "write a LinkedIn post")
+        - An image and instruction (e.g., "write an Instagram caption for this photo")
 
-Your job is to:
-- Analyze the image content if provided
-- Understand the platform or tone implied by the instruction
-- Generate a high-quality, engaging caption that aligns with the instruction (and image, if any)
-- Include emojis, hashtags, and formatting only if appropriate for the platform
-- Write in first person unless told otherwise
-- Behave like multilingual
-"""
+        Your job is to:
+        - Analyze the image content if provided
+        - Understand the platform or tone implied by the instruction
+        - Generate a high-quality, engaging caption that aligns with the instruction (and image, if any)
+        - Include emojis, hashtags, and formatting only if appropriate for the platform
+        - Write in first person unless told otherwise
+        - Behave like multilingual
+        """
 
     user_content = [{"type": "text", "text": instruction}]
     
