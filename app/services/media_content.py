@@ -254,68 +254,6 @@ def import_content_to_weaviate(data, category_map):
 
     logger.info("Import completed.")
 
-
-# # === Load Data and Import to Weaviate ===
-# def import_content_to_weaviate(data, category_map):
-#     try:
-#         # Get the collection
-#         if not weaviate_client.is_connected():
-#             weaviate_client.connect()
-#         content_collection = weaviate_client.collections.get("ContentItem")
-        
-#         for i in range(0, len(data), BATCH_SIZE):
-#             chunk = data[i:i + BATCH_SIZE]
-
-#             # Preprocess all items in the chunk
-#             processed_items = []
-#             for item in chunk:
-#                 processed_item = process_content_for_weaviate(item, category_map)
-#                 if not processed_item.get("title"):
-#                     continue
-#                 processed_items.append(processed_item)
-
-#             # Generate embeddings for all processed items in the chunk
-#             item_vector_pairs = generate_content_embeddings(processed_items)
-#             if not item_vector_pairs:
-#                 logger.error("Failed to generate embeddings for the batch, skipping this chunk")
-#                 continue
-
-#             # Prepare data objects for batch insert
-#             data_objects = []
-#             for processed_item, vector in item_vector_pairs:
-#                 data_objects.append(
-#                     DataObject(
-#                         properties=processed_item,
-#                         vector=vector
-#                     )
-#                 )
-
-#             # Insert all objects at once using batch_insert
-#             try:
-#                 response = content_collection.data.insert_many(data_objects)
-#                 if response.has_errors:
-#                     for error in response.errors:
-#                         logger.error(f"Batch {i // BATCH_SIZE + 1} error: {error}")
-#                 else:
-#                     logger.info(f"Successfully imported {len(data_objects)} items in batch {i // BATCH_SIZE + 1}")
-#             except Exception as e:
-#                 logger.warning(f"Batch insert failed for batch {i // BATCH_SIZE + 1}: {e}")
-#                 logger.info("Attempting individual fallback insert...")
-#                 success = 0
-#                 for item, vec in item_vector_pairs:
-#                     try:
-#                         uuid = content_collection.data.insert(properties=item, vector=vec)
-#                         logger.debug(f"Inserted {item.get('title', 'Unknown')} with UUID {uuid}")
-#                         success += 1
-#                     except Exception as ind_e:
-#                         logger.error(f"Failed individual insert: {item.get('title', 'Unknown')} - {ind_e}")
-#                 logger.info(f"Individually imported {success}/{len(item_vector_pairs)} items in batch {i // BATCH_SIZE + 1}")
-
-#     except Exception as e:
-#         logger.error(f"Import process failed: {e}")
-
-#     logger.info("Import completed.")
-
 # === Embed text ===
 def embed_text(text):
     try:
@@ -423,5 +361,11 @@ def fetch_all_media(batch_size=1000):
     finally:
         weaviate_client.close()
 
+
+import asyncio
+
+async def fetch_all_media_async():
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, fetch_all_media)
         
         

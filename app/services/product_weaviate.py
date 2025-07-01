@@ -176,7 +176,7 @@ def deduplicate_products(products):
     return unique
 
 # === Fetch and Index All Products ===
-def fetch_and_index_all_products():  
+def fetch_all_products():  
     urls = [
         "https://www.kappa-tr.com/feed/standartV3",
         # "https://tr.ecco.com/feed/googleV2",
@@ -199,8 +199,14 @@ def fetch_and_index_all_products():
     upsert_products_to_weaviate(products)
     client.close()
 
+import asyncio
+
+async def fetch_all_products_async():
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, fetch_all_products)
+
 if __name__ == "__main__":
     # Example usage
-    fetch_and_index_all_products()
+    fetch_all_products()
     
     
