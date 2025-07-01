@@ -73,6 +73,7 @@ def upsert_products_to_weaviate(products):
             properties={
                 "product_id": product["product_id"],
                 "title": product["title"],
+                "description": product['description'],
                 "color": product["color"],
                 "gender": product["gender"],
                 "price": product["price"],
@@ -86,6 +87,8 @@ def upsert_products_to_weaviate(products):
     # Chunk and insert in batches to avoid timeout
     for i, chunk in enumerate(chunked(data_objects, max_batch_size)):
         try:
+            if not client.is_connected():
+                client.connect()
             response = product_collection.data.insert_many(chunk)
             if response.has_errors:
                 print(f"Batch {i+1} had {len(response.errors)} errors:")
@@ -137,6 +140,7 @@ def query_weaviate_products(user_prompt, top_k=10):
             product = {
                 "product_id": item.properties.get("product_id"),
                 "title": item.properties.get("title"),
+                "description": item.properties.get("description"),
                 "color": item.properties.get("color"),
                 "gender": item.properties.get("gender"),
                 "price": item.properties.get("price"),
@@ -174,13 +178,13 @@ def deduplicate_products(products):
     return unique
 
 # === Fetch and Index All Products ===
-def fetch_and_index_all_products():  
+def fetch_all_products():  
     urls = [
         "https://www.kappa-tr.com/feed/standartV3",
-        # "https://tr.ecco.com/feed/googleV2",
-        # "https://www.suvari.com.tr/feed/googleV2",
-        # "https://www.alvinaonline.com/tr/p/XMLProduct/GoogleMerchantXML",
-        # "https://www.perspective.com.tr/feed/facebook",
+        "https://tr.ecco.com/feed/googleV2",
+        "https://www.suvari.com.tr/feed/googleV2",
+        "https://www.alvinaonline.com/tr/p/XMLProduct/GoogleMerchantXML",
+        "https://www.perspective.com.tr/feed/facebook",
     ]
 
     all_products = []
@@ -197,8 +201,14 @@ def fetch_and_index_all_products():
     upsert_products_to_weaviate(products)
     client.close()
 
+import asyncio
+
+async def fetch_all_products_async():
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, fetch_all_products)
+
 if __name__ == "__main__":
     # Example usage
-    fetch_and_index_all_products()
+    fetch_all_products()
     
     

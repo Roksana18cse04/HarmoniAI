@@ -11,6 +11,7 @@ from openai import OpenAI
 import asyncio
 from weaviate.classes.data import DataObject
 from weaviate.classes.query import MetadataQuery
+from app.services.price_calculate import count_tokens
 import ijson
 import numpy as np
 
@@ -46,7 +47,6 @@ def process_content_for_weaviate(content: Dict, category_map: Dict) -> Dict:
     processed = {
         "title": content.get("title", ""),
         "category": category_title,
-
         "genre_list": (
             [g.get("title", "").lower() for g in content.get("details", {}).get("genres", [])]
             if category_title in ['Kitab', 'Müzik'] else
@@ -126,29 +126,85 @@ def process_content_for_weaviate(content: Dict, category_map: Dict) -> Dict:
     # Remove fields with None, empty string, or empty list values
     return {k: v for k, v in processed.items() if v not in [None, "", []]}
 
-def generate_content_embeddings(items: list[dict]) -> list[tuple[dict, list[float]]]:
-    """
-    Generate OpenAI embeddings for a list of content metadata dictionaries.
-    Returns list of (item, embedding) tuples.
-    """
-    texts = []
-    cleaned_items = []
+# def generate_content_embeddings(items: list[dict]) -> list[tuple[dict, list[float]]]:
+#     """
+#     Generate OpenAI embeddings for a list of content metadata dictionaries.
+#     Returns list of (item, embedding) tuples.
+#     """
+#     texts = []
+#     cleaned_items = []
+
+#     for item in items:
+#         text_input = " ".join([
+#             item.get("id", ""),
+#             item.get("title", ""),
+#             item.get("category", ""),
+#             ", ".join(item.get("genre_list", [])),
+#             item.get("language", ""),
+#             item.get("description", ""),        
+#             item.get("creator", ""),
+#             ", ".join(item.get("tags", [])),
+#             ", ".join(item.get("actors", [])),
+#             item.get("publisher", "")
+#         ])
+#         text_input = text_input.lower().strip()
+#         texts.append(text_input)
+#         cleaned_items.append(item)  # Keep same order
+
+#     try:
+#         response = openai_client.embeddings.create(
+#             model="text-embedding-3-small",
+#             input=texts
+#         )
+#         vectors = [r.embedding for r in response.data]
+#         return list(zip(cleaned_items, vectors))  # ⬅ return tuples of (item, vector)
+#     except Exception as e:
+#         logger.error(f"Embedding generation failed: {e}")
+#         return []
+
+# === Token-safe chunking ===
+def chunk_items_by_token_limit(items, max_tokens=300000):
+    current_batch = []
+    current_token_sum = 0
 
     for item in items:
         text_input = " ".join([
-            item.get("title", ""),
-            item.get("category", ""),
-            ", ".join(item.get("genre_list", [])),
-            item.get("language", ""),
-            item.get("description", ""),        
-            item.get("creator", ""),
-            ", ".join(item.get("tags", [])),
-            ", ".join(item.get("actors", [])),
+            item.get("id", ""), item.get("title", ""), item.get("category", ""),
+            ", ".join(item.get("genre_list", [])), item.get("language", ""),
+            item.get("description", ""), item.get("creator", ""),
+            ", ".join(item.get("tags", [])), ", ".join(item.get("actors", [])),
             item.get("publisher", "")
-        ])
-        text_input = text_input.lower().strip()
+        ]).lower().strip()
+
+        token_count = count_tokens(text_input, 'gpt-4')
+
+        if token_count > max_tokens:
+            logger.warning(f"Item '{item.get('title', 'Unknown')}' exceeds token limit and will be skipped.")
+            continue
+
+        if current_token_sum + token_count > max_tokens:
+            yield current_batch
+            current_batch = []
+            current_token_sum = 0
+
+        current_batch.append(item)
+        current_token_sum += token_count
+
+    if current_batch:
+        yield current_batch
+
+# === Embedding generation ===
+def generate_content_embeddings(batch_items: list[dict]) -> list[tuple[dict, list[float]]]:
+    texts = []
+    for item in batch_items:
+        text_input = " ".join([
+            item.get("id", ""), item.get("title", ""), item.get("category", ""),
+            ", ".join(item.get("genre_list", [])), item.get("language", ""),
+            item.get("description", ""), item.get("creator", ""),
+            ", ".join(item.get("tags", [])), ", ".join(item.get("actors", [])),
+            item.get("publisher", "")
+        ]).lower().strip()
         texts.append(text_input)
-        cleaned_items.append(item)  # Keep same order
 
     try:
         response = openai_client.embeddings.create(
@@ -156,67 +212,47 @@ def generate_content_embeddings(items: list[dict]) -> list[tuple[dict, list[floa
             input=texts
         )
         vectors = [r.embedding for r in response.data]
-        return list(zip(cleaned_items, vectors))  # ⬅ return tuples of (item, vector)
+        return list(zip(batch_items, vectors))
     except Exception as e:
         logger.error(f"Embedding generation failed: {e}")
         return []
 
-# === Load Data and Import to Weaviate ===
+# === Main import function ===
 def import_content_to_weaviate(data, category_map):
     try:
-        # Get the collection
         if not weaviate_client.is_connected():
             weaviate_client.connect()
         content_collection = weaviate_client.collections.get("ContentItem")
-        
+
         for i in range(0, len(data), BATCH_SIZE):
             chunk = data[i:i + BATCH_SIZE]
+            processed_items = [process_content_for_weaviate(item, category_map) for item in chunk if item.get("title")]
 
-            # Preprocess all items in the chunk
-            processed_items = []
-            for item in chunk:
-                processed_item = process_content_for_weaviate(item, category_map)
-                if not processed_item.get("title"):
+            for token_safe_chunk in chunk_items_by_token_limit(processed_items):
+                item_vector_pairs = generate_content_embeddings(token_safe_chunk)
+                if not item_vector_pairs:
+                    logger.error("Failed to generate embeddings for this chunk, skipping.")
                     continue
-                processed_items.append(processed_item)
 
-            # Generate embeddings for all processed items in the chunk
-            item_vector_pairs = generate_content_embeddings(processed_items)
-            if not item_vector_pairs:
-                logger.error("Failed to generate embeddings for the batch, skipping this chunk")
-                continue
-
-            # Prepare data objects for batch insert
-            data_objects = []
-            for processed_item, vector in item_vector_pairs:
-                data_objects.append(
-                    DataObject(
-                        properties=processed_item,
-                        vector=vector
-                    )
-                )
-
-            # Insert all objects at once using batch_insert
-            try:
-                response = content_collection.data.insert_many(data_objects)
-                if response.has_errors:
-                    for error in response.errors:
-                        logger.error(f"Batch {i // BATCH_SIZE + 1} error: {error}")
-                else:
-                    logger.info(f"✅ Successfully imported {len(data_objects)} items in batch {i // BATCH_SIZE + 1}")
-            except Exception as e:
-                logger.warning(f"⚠️ Batch insert failed for batch {i // BATCH_SIZE + 1}: {e}")
-                logger.info("Attempting individual fallback insert...")
-                success = 0
-                for item, vec in item_vector_pairs:
-                    try:
-                        uuid = content_collection.data.insert(properties=item, vector=vec)
-                        logger.debug(f"Inserted {item.get('title', 'Unknown')} with UUID {uuid}")
-                        success += 1
-                    except Exception as ind_e:
-                        logger.error(f"Failed individual insert: {item.get('title', 'Unknown')} - {ind_e}")
-                logger.info(f"✅ Individually imported {success}/{len(item_vector_pairs)} items in batch {i // BATCH_SIZE + 1}")
-
+                data_objects = [DataObject(properties=item, vector=vec) for item, vec in item_vector_pairs]
+                try:
+                    if not weaviate_client.is_connected():
+                        weaviate_client.connect()
+                    response = content_collection.data.insert_many(data_objects)
+                    if response.has_errors:
+                        for error in response.errors:
+                            logger.error(f"Batch error: {error}")
+                    else:
+                        logger.info(f"Successfully imported {len(data_objects)} items")
+                except Exception as e:
+                    logger.warning(f"Batch insert failed: {e}")
+                    for item, vec in item_vector_pairs:
+                        try:
+                            if not weaviate_client.is_connected():
+                                weaviate_client.connect()
+                            content_collection.data.insert(properties=item, vector=vec)
+                        except Exception as ind_e:
+                            logger.error(f"Failed to insert: {item.get('title', 'Unknown')} - {ind_e}")
     except Exception as e:
         logger.error(f"Import process failed: {e}")
 
@@ -261,7 +297,22 @@ def query_weaviate_media(user_prompt, top_k: int = 10):
     except Exception as e:
         print("Query error:", e)
         return []
-    
+
+def filter_duplicates(items, key_fields=["title", "language"]):
+    seen = set()
+    unique_items = []
+
+    for item in items:
+        key_parts = [str(item.get(f, "")) for f in key_fields]
+        key = "::".join(key_parts).strip().lower()
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        unique_items.append(item)
+
+    return unique_items
+
+
 import requests    
 
 def fetch_all_media(batch_size=1000): 
@@ -296,7 +347,8 @@ def fetch_all_media(batch_size=1000):
         for item in items:
             batch.append(item)
             if len(batch) >= batch_size:
-                import_content_to_weaviate(batch, category_map)
+                unique_batch = filter_duplicates(batch)
+                import_content_to_weaviate(unique_batch, category_map)
                 count += len(batch)
                 batch = []
                 logger.info(f"Imported {count} content items.")
@@ -313,5 +365,11 @@ def fetch_all_media(batch_size=1000):
     finally:
         weaviate_client.close()
 
+
+import asyncio
+
+async def fetch_all_media_async():
+    loop = asyncio.get_event_loop()
+    await loop.run_in_executor(None, fetch_all_media)
         
         

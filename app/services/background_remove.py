@@ -17,38 +17,40 @@ HEADERS = {
 
 
 def create_remove_backgroud(image_url:str):
-    response = requests.post(
-        "https://api.eachlabs.ai/v1/prediction/",
-        headers=HEADERS,
-        json={
+    playload = {
             "model": "eachlabs-bg-remover-v1",
             "version": "0.0.1",
             "input": {
-  "image_url": image_url
-},
+                "image_url": image_url
+        },
             "webhook_url": ""
         }
+    response = requests.post(
+        "https://api.eachlabs.ai/v1/prediction/",
+        headers=HEADERS,
+        json=playload
     )
     prediction = response.json()
     
     if prediction["status"] != "success":
         raise Exception(f"Prediction failed: {prediction}")
     
-    return prediction["predictionID"]
+    return prediction,playload
 
  
 
         
 def background_remove(image_url:str):
     try:
-        prediction_id = create_remove_backgroud(image_url)
+        response,model_info = create_remove_backgroud(image_url)
         # Create prediction
+        prediction_id = response['predictionID']
         print(f"Prediction created: {prediction_id}")
         # Get result
         result = get_prediction(prediction_id)
         print(f"Output URL: {result['output']}")
         print(f"Processing time: {result['metrics']['predict_time']}s")
-        return result['output']
+        return result,model_info
     except Exception as e:
         print(f"Error: {e}")
         

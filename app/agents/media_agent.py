@@ -8,7 +8,7 @@ import json
 def media_agent(platform, model, user_prompt):
     relevant_items = query_weaviate_media(user_prompt, top_k=10)
 
-    print("Relevant media items -----------", relevant_items)
+    # print("Relevant media items -----------", relevant_items)
 
     media_text = "\n".join([
         f"- Title: {m.get('title')}, Description: {m.get('description')}, Rating: {m.get('rating')}, Duration: {m.get('duration')}, Link: {m.get('link')}, Image: {m.get('image')}"
@@ -16,39 +16,29 @@ def media_agent(platform, model, user_prompt):
     ])
 
     prompt = f"""You are a helpful media assistant.  
-Here is a list of relevant content items:  
-{media_text}  
+        Here is a list of relevant content items:  
+        {media_text}  
 
-The user asks: "{user_prompt}"  
+        The user asks: "{user_prompt}"  
+        - Behave like as multilangual 
 
-**Task:**  
-1. Select **up to 5** best-matching items (fewer if not enough are relevant).  
-2. Return them as a **valid JSON array** with each item containing:  
-   - `title` (string)  
-   - `description` (string)  
-   - `rating` (number)  
-   - `image` (string, URL/path)  
-   - `link` (string, URL)  
-   - `duration` (string)  
+        **Task:**  
+        1. Select **up to 3** best-matching items (fewer if not enough are relevant).  
+        2. Return them as a **valid JSON array** with each item containing:  
+            - `id` (string)
+            - `title` (string)  
+            - `description` (string)  
+            - `rating` (number)  
+            - `image` (string, URL/path)  
+            - `link` (string, URL)  
+            - `duration` (string)  
 
-**Rules:**  
-- Only include items that truly match the query.  
-- If no items match, return an empty array `[]`.  
-- Respond **ONLY with JSON**, no additional text.  
+        ### Rules:
+        - Only include items that are relevant to the user's query.
+        - If no items are relevant, return an empty JSON array: `[]`.
+        - Your response **must be valid JSON only** — no explanations, comments, or markdown formatting. 
 
-Example output format:  
-```json
-[
-    {{
-        "title": "Inception",
-        "description": "A skilled thief enters people’s dreams to steal secrets.",
-        "rating": 8.8,
-        "image": "https://example.com/inception.jpg",
-        "link": "https://example.com/inception",
-        "duration": "128"
-    }}
-]
-"""
+        """
     # response = client.chat.completions.create(
     #     model="gpt-4",
     #     messages=[{"role": "user", "content": prompt}],
@@ -57,13 +47,13 @@ Example output format:
 
     llm = LLMProvider(platform, model)
     response = llm.generate_response("", prompt)
-    print(response)
+    # print("llm_response---------------",response)
     try:
         # response_text = json.loads( response.choices[0].message.content )
-        response_text = json.loads (response)
-        price =  price_calculate('chatgpt',model, user_prompt, response_text)
+        price =  price_calculate(platform,model, user_prompt, response)
         return {
-            "response": response_text,
+            "status": response['status'],
+            "output": response['content'],
             "price": price['price'],
             "input_token": price['input_token'],
             "output_token": price['output_token']

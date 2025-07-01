@@ -8,6 +8,7 @@ def generate_chat_msg(platform, model, prompt, history):
         "For shopping, I don’t just create visuals — I analyze real product data to suggest the best items tailored to your preferences. "
         "I can also help you explore movie lists, play media, and guide your interactions with ease. "
         "Let's keep the conversation flowing naturally, using our full history and your latest message. How can I assist you today?"
+        "Behave like as multilangual "
     )
 
     llm = LLMProvider(platform, model)
@@ -16,7 +17,7 @@ def generate_chat_msg(platform, model, prompt, history):
 
     return {
         "status": response['status'],
-        "result": response['content'],
+        "output": response['content'],
         "price": price['price'],
         "input_token": price['input_token'],
         "output_token": price['output_token']

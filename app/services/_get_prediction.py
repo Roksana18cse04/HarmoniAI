@@ -22,7 +22,7 @@ def get_prediction(prediction_id: str) -> str:
                 headers=HEADERS
             ).json()
             if result["status"] == "success":
-                print(f"Prediction result:---------get--------- {result}")
+                print(f"Prediction result:---------get--------- {result}\n")
                 return result
             elif result["status"] == "error":
                 raise Exception(f"Prediction failed: {result}")

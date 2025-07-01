@@ -41,9 +41,9 @@ class LLMProvider:
                     {"role": "user", "content": user_prompt}
                 ],
                 temperature=0.7,
-                max_tokens=500,
+                max_tokens=1000,
             )
-            print("row llm response--------------", response)
+            # print("row llm response--------------", response)
             content = response.choices[0].message.content
             print(content)
             result = extract_json_from_llm(content)

@@ -34,26 +34,10 @@ async def enhance_prompt(platform,base_prompt, eachlabs_model, llm_model, intend
         print(f"Enhanced prompt: {enhanced}")
         print(f" Price: {price}")
         
-        return {
-            "prompt": base_prompt,
-            "enhanced_prompt": enhanced,
-            "eachlabs_model": eachlabs_model,
-            "llm_model": llm_model,
-            "price": price["price"],
-            "input_token": price["input_token"],    # Fixed typo
-            "output_token": price["output_token"],  # Fixed: was ["output_token"] (list)
-            "intend": intend
-        }
+        return enhanced,price
+            
     
     except Exception as e:
         print(f"[{platform}] Error enhancing prompt: {e}")
         
-        return {
-            "prompt": base_prompt,
-            "enhanced_prompt": base_prompt,  # Fixed: was using undefined 'enhanced' variable
-            "eachlabs_model": eachlabs_model,
-            "price": 0.0,
-            "input_token": 0,    # Fixed typo
-            "output_token": 0, 
-            "intend": intend
-        }
+     

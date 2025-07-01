@@ -1,15 +1,82 @@
-
-
 import requests
-
 def store_generated_message(userId, chatId, prompt, response, intend, runtime, input_urls=[], eachlabs_info=None, llm_model=None):
-    print("response----------", response)
+    print('response in storing----------', response)
     inputs = [{"type": "text", "content": prompt}]
     responses=[]
     if intend=='caption-create':
-        inputs.append({"type": "image", "content": input_urls})
+        if input_urls: 
+            inputs.append({"type": "image", "content": input_urls})
+        responses.append({'type': 'text', 'content': response['output']})
+    elif intend=='chat' or intend=='question-answering' or intend=='content-create':
+        responses.append({'type': 'text', 'content': response['output']})
     elif intend=='chat':
         responses.append({'type': 'text', 'content': response['result']})
+    elif intend=='image-to-image':
+        responses.append({'type': 'image', 'content': response['output']})
+    elif intend=='image-to-video':
+        inputs.append({"type": "image", "content": input_urls})
+        inputs.append({"type": "audio", "content": input_urls})
+        responses.append({'type': 'video', 'content': response['output']})
+    elif intend == 'voice-to-voice':
+        inputs.append({"type": "audio", "content": input_urls})
+        responses.append({'type': 'audio', 'content': response['output']})
+    elif intend == 'voice-to-text':
+        inputs.append({"type": "audio", "content": input_urls})
+        responses.append({'type': 'audio', 'content': response['output']})
+    elif intend == 'text-to-image':
+        responses.append({'type': 'image', 'content': response['output'][0]})
+    elif intend == 'text-to-video':
+        responses.append({'type': 'video', 'content': response['output']})
+    elif intend == 'text-to-voice':
+        responses.append({'type': 'audio', 'content': response['output']})
+    elif intend == 'video-to-text':
+        inputs.append({"type": "video", "content": input_urls})
+        responses.append({'type': 'text', 'content': response['output']})
+    elif intend == 'pdf-to-text':
+        inputs.append({"type": "pdf", "content": input_urls})
+        responses.append({'type': 'text', 'content': response['output']})
+
+    elif intend=='shopping' or intend=='media-recommendation':
+        card_items = []
+        for item in response['output']:
+            # Extract numeric value from "799.00 TRY"
+            numeric_price=0.0
+            if intend=='shopping':
+                try:
+                    price_str = item['price']
+                    numeric_price = float(price_str.split()[0])  # '799.00' from '799.00 TRY'
+                except (ValueError, IndexError):
+                    numeric_price = 0.0  # fallback if format is invalid
+
+            card_items.append({
+                "id": item['id'],
+                "title": item['title'],
+                "description": item['description'],
+                "type": "image",
+                "image": item['image'],
+                "file": item['link'],
+                "rating": float(item.get('rating', 0.0)),  # 0 or default if missing
+                "duration": float(item.get('duration', 0.0)),
+                "price": numeric_price  
+            })
+                    
+        responses.append({
+            "type": "card",
+            "isCard": True,
+            "cardContent": card_items
+        })
+    print(f"----------------------------------------")
+        
+        
+    
+    llm_model_info=None
+    if llm_model:
+        llm_model_info = {
+            'name':llm_model,
+            'status': response['status'],
+            'input_token': response['input_token'],
+            'output_token': response['output_token']
+        }
 
     data = {
         "chatId": chatId,
@@ -17,19 +84,14 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
         "price": response['price'],
         "modelInfo": {
             'eachlabs_model': eachlabs_info,
-            'llm_models': {
-                'name':llm_model,
-                'status': response['status'],
-                'input_token': response['input_token'],
-                'output_token': response['output_token']
-            }
+            'llm_models': llm_model_info
         },
         "intend": intend,
         "runtime": runtime,
         "prompt": inputs,
         "response": responses
     }
-
+    print('data------------', data)
     try:
         r = requests.post("https://harmoniai-backend.onrender.com/api/v1/conversations/add-message", json=data)
         print("Stored message:", r.json())

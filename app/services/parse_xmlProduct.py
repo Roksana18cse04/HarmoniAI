@@ -20,6 +20,7 @@ def get_products_from_xml(url):
         product = {
             "product_id": get("g:id") or get("id"),
             "title": get("title"),
+            "description": get('description'),
             "link": get("link"),
             "image_link": get("g:image_link"),
             "price": get("g:price"),
