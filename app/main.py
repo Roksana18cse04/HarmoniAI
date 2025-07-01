@@ -14,7 +14,6 @@ ALGORITHM = "HS256"
 security = HTTPBearer()
 
 def verify_token(token: str):
-    print(token)
     try:
         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
     except JWTError:
@@ -23,14 +22,17 @@ def verify_token(token: str):
 def get_current_user(request: Request):
     auth_header = request.headers.get("Authorization")
     print("Header:", auth_header)
-    
+
+    if not auth_header:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Authorization header missing")
+
     if auth_header.startswith("Bearer "):
         token = auth_header.split(" ")[1]
     else:
         token = auth_header
 
     try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token.strip(), SECRET_KEY, algorithms=[ALGORITHM])
         print("Payload:", payload)
         return payload
     except JWTError as e:
@@ -133,10 +135,40 @@ def shutdown_event():
 async def root():
     return {"message": "Welcome to the Multi-Agent System!"}
 
-# # Secure route with JWT
+# Secure route with JWT
 # @app.get("/secure-status")
 # async def secure_status(user: dict = Depends(get_current_user)):
 #     return {"message": "Secure access granted!", "user": user}
+
+# Add BearerAuth to Swagger UI docs
+from fastapi.openapi.utils import get_openapi
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+
+    openapi_schema = get_openapi(
+        title="My API",
+        version="1.0.0",
+        description="API with JWT Auth",
+        routes=app.routes,
+    )
+
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": "http",
+            "scheme": "bearer",
+            "bearerFormat": "JWT"
+        }
+    }
+
+    for path in openapi_schema["paths"].values():
+        for method in path.values():
+            method["security"] = [{"BearerAuth": []}]
+
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
 
 
 def main():
