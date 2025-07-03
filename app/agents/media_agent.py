@@ -36,6 +36,7 @@ The user asks: "{user_prompt}"
 - Only include items that are relevant to the user's query.
 - If no items are relevant, return an empty JSON array: `[]`.
 - Your response **must be valid JSON only** — no explanations, comments, or markdown formatting. 
+- Behave like multilingual
 
 """
     # response = client.chat.completions.create(

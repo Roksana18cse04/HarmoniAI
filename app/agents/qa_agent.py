@@ -44,6 +44,7 @@ Your responsibilities:
 - If the content includes names, places, stats, or breaking news, report them exactly as found in the article.
 - Do not invent facts or make assumptions beyond what the content states.
 - If the article is incomplete, ambiguous, or lacks detail, let the user know.
+- Behave like multilingual
 
 Be concise, informative, and neutral. Only answer based on what the article explicitly says.
 """

@@ -31,7 +31,7 @@ def embed_products_in_batches(products):
         end = start + BATCH_SIZE
         batch = products[start:end]
 
-        texts = [f"{p['product_id']} {p['title']} {p['color']} {p['gender']} {p['price']} {p['link']} {p['image_link']}" for p in batch]
+        texts = [f"{p['product_id']} {p['title']} {p['color']} {p['gender']} {p['price']} {p['link']} {p['image_link']} {p['department']}" for p in batch]
 
         try:
             response = openai_client.embeddings.create(
@@ -79,6 +79,7 @@ def upsert_products_to_weaviate(products):
                 "price": product["price"],
                 "link": product["link"],
                 "image_link": product["image_link"],
+                "department": product["department"]
             },
             vector=vector.tolist() if hasattr(vector, "tolist") else vector
         )
@@ -146,6 +147,7 @@ def query_weaviate_products(user_prompt, top_k=10):
                 "price": item.properties.get("price"),
                 "link": item.properties.get("link"),
                 "image_link": item.properties.get("image_link"),
+                "department": item.properties.get("department"),
                 "score": item.metadata.score if item.metadata else None
             }
             products.append(product)
@@ -181,10 +183,10 @@ def deduplicate_products(products):
 def fetch_all_products():  
     urls = [
         "https://www.kappa-tr.com/feed/standartV3",
-        "https://tr.ecco.com/feed/googleV2",
-        "https://www.suvari.com.tr/feed/googleV2",
-        "https://www.alvinaonline.com/tr/p/XMLProduct/GoogleMerchantXML",
-        "https://www.perspective.com.tr/feed/facebook",
+        # "https://tr.ecco.com/feed/googleV2",
+        # "https://www.suvari.com.tr/feed/googleV2",
+        # "https://www.alvinaonline.com/tr/p/XMLProduct/GoogleMerchantXML",
+        # "https://www.perspective.com.tr/feed/facebook",
     ]
 
     all_products = []
