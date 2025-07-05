@@ -96,7 +96,7 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
         "userId": userId,
         "price": response['price'],
         "modelInfo": {
-            'eachlabs_model': eachlabs_info,
+            'eachlabs_models': eachlabs_info,
             'llm_models': llm_model_info
         },
         "intend": intend,

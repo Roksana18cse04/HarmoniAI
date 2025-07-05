@@ -13,11 +13,11 @@ ALGORITHM = "HS256"
 
 security = HTTPBearer()
 
-def verify_token(token: str):
-    try:
-        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    except JWTError:
-        return None
+# def verify_token(token: str):
+#     try:
+#         return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+#     except JWTError:
+#         return None
 
 def get_current_user(request: Request):
     auth_header = request.headers.get("Authorization")

@@ -114,7 +114,9 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
             "user_prompt": prompt,
             "response": "Sorry, I can't help with that.",
             "model_info": {
-                'llm_model_name': model
+                'llm_models': {
+                    "name": model
+                }
             },
             "intend": "unknown",
             "runtime": round( time.time()-start_time, 3)
@@ -139,7 +141,7 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
             "prompt": prompt,
             "response": response,
             "model_info": {
-                'llm_model': {
+                'llm_models': {
                     'name': model
                 }
             },
@@ -163,7 +165,7 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
             "prompt": prompt,
             "response": response,
             "model_info": {
-                'llm_model':{
+                'llm_models':{
                     'name':model,
                 }
             },
