@@ -9,6 +9,7 @@ from app.services.blackwhite_to_color_image import draw_image_color
 from app.services.dress_trail import dress_trial
 from app.services.image_merge import image_merge
 from app.services.product_photo_shot import product_photo_generate
+from app.services.image_to_cartone import image_to_cartone_generate
 from app.services.price_calculate import price_calculate
 from app.services.llm_provider import LLMProvider
 
@@ -36,6 +37,7 @@ def detect_image_edit_type(prompt: str, platform, llm_model) -> tuple[str, float
         - face_swap
         - baby_face
         - product-photo-shot
+        - cartone_generate
         - style_change
         - style_convert
         - background_remove
@@ -85,6 +87,7 @@ def call_function_by_style(style, gender, style_slug, prompt, image_urls: list[s
     category_handlers = {
         "face_swap": lambda: face_swap(image_urls[0], image_urls[1]),
         "style_change": lambda: style_change(style_slug, image_urls[0]),
+        "cartone_generate":lambda: image_to_cartone_generate(image_urls[0]),
         "style_convert": lambda: image_style_and_color_change(prompt, image_urls[0], image_urls[1]),
         "background_remove": lambda: background_remove(image_urls[0]),
         "color_adjustment": lambda: draw_image_color(image_urls[0], prompt),

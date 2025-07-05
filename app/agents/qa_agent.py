@@ -31,7 +31,7 @@ def extract_content_from_url(url: str) -> str:
 
 def summarize_content(platform, model, content: str, original_prompt: str) -> str:
     system_prompt = """
-You are a helpful assistant that reads and understands web content, and answers user questions accurately based only on the information found in the provided article.
+        You are a helpful assistant that reads and understands web content, and answers user questions accurately based only on the information found in the provided article.
 
 Your responsibilities:
 - Extract factual answers from the article with clarity and precision.
@@ -46,8 +46,8 @@ Your responsibilities:
 - If the article is incomplete, ambiguous, or lacks detail, let the user know.
 - Behave like multilingual
 
-Be concise, informative, and neutral. Only answer based on what the article explicitly says.
-"""
+        Be concise, informative, and neutral. Only answer based on what the article explicitly says.
+        """
 
     user_prompt = f"Based on the following article, answer this user query: '{original_prompt}'\n\nArticle:\n{content}"
     llm = LLMProvider(platform, model)
