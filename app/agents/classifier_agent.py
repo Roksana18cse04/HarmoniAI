@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import json
 import re
 
-load_dotenv()
+load_dotenv(override=True)
 
 # Initialize OpenAI or use your preferred LLM provider
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
@@ -120,7 +120,7 @@ def classify_prompt_agent(platform, model, prompt: str, categories_list: list) -
         "{\n  \"intent\": \"slug\",\n  \"category_id\": number\n}"
         "You support multilingual prompts (e.g., English, Turkish, Spanish, French, Arabic, etc.)."
     )
-
+    
     llm = LLMProvider(platform, model)
     
     try:

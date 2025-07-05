@@ -33,10 +33,11 @@ def media_agent(platform, model, user_prompt):
             - `link` (string, URL)  
             - `duration` (string)  
 
-        ### Rules:
-        - Only include items that are relevant to the user's query.
-        - If no items are relevant, return an empty JSON array: `[]`.
-        - Your response **must be valid JSON only** — no explanations, comments, or markdown formatting. 
+### Rules:
+- Only include items that are relevant to the user's query.
+- If no items are relevant, return an empty JSON array: `[]`.
+- Your response **must be valid JSON only** — no explanations, comments, or markdown formatting. 
+- Behave like multilingual
 
         """
     # response = client.chat.completions.create(

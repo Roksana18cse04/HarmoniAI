@@ -19,7 +19,7 @@ def shopping_agent(platform, model, user_prompt):
     print("relevant products -----------", relevant_products)
 
     product_text = "\n".join([
-        f"- ID: {p['product_id']} Title: {p['title']}, Color: {p['color']}, Gender: {p['gender']}, Price: {p['price']}, Link: {p['link']}, Image_link: {p['image_link']}"
+        f"- ID: {p['product_id']}, Department: {p['department']}, Title: {p['title']}, Color: {p['color']}, Gender: {p['gender']}, Prod_Price: {p['price']}, Link: {p['link']}, Image_link: {p['image_link']}"
         for p in relevant_products
     ])
 
@@ -30,34 +30,39 @@ def shopping_agent(platform, model, user_prompt):
         The user asks: "{user_prompt}" 
         -Behave like as multilangual 
 
-        **Task:**  
-        1. Select **up to 5** best-matching products (fewer if not enough are relevant).  
-        2. Return them as a **valid JSON array** with each item containing:  
-        - `id` (string)  
-        - `title` (string)  
-        - `description` (string)
-        - `price` (string/number)  
-        - `link` (string, URL)  
-        - `image` (string, URL/path)  
+**Task:**  
+1. Select **up to 5** best-matching products (fewer if not enough are relevant).  
+2. Return them as a **valid JSON array** with each item containing:  
+   - `id` (string)  
+   - `title` (string) 
+   - `description` (string)
+   - `color` (string)
+   - `department` (string)
+   - `prod_price` (string)  
+   - `link` (string, URL)  
+   - `image` (string, URL/path)  
 
-        **Rules:**  
-        - Only include products that truly match the query.  
-        - If no products match, return an empty array `[]`.  
-        - Respond **ONLY with JSON**, no additional text.  
+**Rules:**  
+- Only include products that truly match the query.  
+- If no products match, return an empty array `[]`.  
+- Respond **ONLY with JSON**, no additional text.  
+- Behave like multilingual
 
-        Example output format:  
-        ```json
-        [
-            {{
-                "id": "12345",
-                "title": "Product Name",
-                "description": Product Description,
-                "price": "$19.99",
-                "link": "https://example.com/product",
-                "image": "https://example.com/image.jpg"
-            }}
-        ]
-        """
+Example output format:  
+```json
+[
+    {{
+        "id": "12345",
+        "title": "Product Name",
+        "description": Product Description,
+        "color": "black",
+        "department": "Şapka"
+        "prod_price": "$19.99",
+        "link": "https://example.com/product",
+        "image": "https://example.com/image.jpg"
+    }}
+]
+"""
     # response = client.chat.completions.create(
     #     model="gpt-4",
     #     messages=[{"role": "user", "content": prompt}],
@@ -65,13 +70,12 @@ def shopping_agent(platform, model, user_prompt):
     # )
     llm = LLMProvider(platform, model)
     response = llm.generate_response("", prompt)
-    print(response)
+    print("response for shopping agent------------", response)
     try:
-        response_text = json.loads( response )
-        price =  price_calculate("chatgpt", model, user_prompt, response_text)
+        price =  price_calculate("chatgpt", model, user_prompt, response)
         return {
             "status": "success",
-            "output": response_text,
+            "output": response['content'],
             "price": price['price'],
             "input_token": price['input_token'],
             "output_token": price['output_token']
@@ -79,7 +83,6 @@ def shopping_agent(platform, model, user_prompt):
 
     except json.JSONDecodeError:
         print("Failed to parse JSON. Raw response:")
-        print(response.choices[0].message.content)
         return {"error": "Invalid JSON returned from model"}
 
 

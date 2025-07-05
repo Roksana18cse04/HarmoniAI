@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, UploadFile, Depends, Form
+from fastapi import Request, APIRouter, File, UploadFile, Form
 from typing import Optional, Union, List
 from app.agents.chaining_agent import run_multi_agent_chain
 from app.services.correct_symspell import correct_spelling
@@ -7,6 +7,9 @@ from app.utils.r2_uploader import upload_to_r2
 import uuid
 import requests
 import mimetypes
+
+from app.services.token_manager import TokenManager, convert_dollar_into_token
+
 router = APIRouter()
 
 def get_history(chatId, prompt):
@@ -33,8 +36,34 @@ def get_history(chatId, prompt):
     full_prompt = f"{history_text}\nUser: {prompt}\nAssistant:"
     return platform, full_prompt
 
+# ----------------update user token--------------------
+def update_user_token(user_id, auth_token, cost):
+    used_token = convert_dollar_into_token(cost)
+    print("used token----------------------", used_token)
+    api_url = f"https://harmoniai-backend.onrender.com/api/v1/users/update-token/{user_id}"
+    headers = {
+        "Authorization": auth_token
+    }
+    payload = {
+        "token": used_token
+    }
+    try:
+        response = requests.put(api_url, headers=headers, json=payload)
+        response.raise_for_status()
+        return {
+            "success": True,
+            "message": "Token updated successfully"
+        }
+    except requests.exceptions.RequestException as e:
+        print("Error updating user token:", e)
+        return {
+            "success": False,
+            "message": str(e)
+        }
+
 @router.post("/execute-prompt")
 async def execute_prompt(
+    request:Request,
     user_id: str = Form(...), 
     chat_id: str = Form(...),
     model: str = Form(...),
@@ -42,6 +71,16 @@ async def execute_prompt(
     youtube_url: Optional[str] = Form(None),  # <-- YouTube URL comes from a separate form field
     files: Optional[List[Union[UploadFile, str]]] = File(None)  # Multiple uploaded files 
 ):
+    auth_header = request.headers.get("Authorization")
+    
+    if not auth_header:
+        return {"error": "Authorization header missing"}
+
+    if auth_header.startswith("Bearer "):
+        auth_token = auth_header.split(" ")[1]
+    else:
+        auth_token = auth_header  # fallback
+
     file_urls = []
     
     # Process uploaded files (image/audio/video/pdf/etc.)
@@ -80,7 +119,18 @@ async def execute_prompt(
                 print(f"File upload failed: {str(e)}")
 
     prompt= correct_spelling(prompt)
-    platform, full_prompt= get_history(chat_id, prompt)        
-    result = run_multi_agent_chain(user_id,chat_id, platform, model, prompt, full_prompt,youtube_url, file_urls)
-    return result
+    platform, full_prompt= get_history(chat_id, prompt)     
+
+    t_manager = TokenManager(auth_token, prompt, model)
+    if t_manager.is_enough_token(): 
+            result = run_multi_agent_chain(user_id,chat_id, platform, model, prompt, full_prompt,youtube_url, file_urls)
+
+            print("used_cost------------", result['response']['price'])
+            if result['response']['price']:
+                res = update_user_token(user_id, auth_token, result['response']['price'])
+                print(res)
+            return result    
+ 
+    else:
+        return "Insufficient Token! Please upgrade your plan"
     

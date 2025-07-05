@@ -1,4 +1,6 @@
 import requests
+import ast
+
 def store_generated_message(userId, chatId, prompt, response, intend, runtime, input_urls=[], eachlabs_info=None, llm_model=None):
     print('response in storing----------', response)
     inputs = [{"type": "text", "content": prompt}]
@@ -39,11 +41,20 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
     elif intend=='shopping' or intend=='media-recommendation':
         card_items = []
         for item in response['output']:
+            # Convert string to dict if needed
+            if isinstance(item, str):
+                try:
+                    item = ast.literal_eval(item)
+                except:
+                    continue  # skip if not a valid dict string
+
             # Extract numeric value from "799.00 TRY"
             numeric_price=0.0
             if intend=='shopping':
                 try:
-                    price_str = item['price']
+                    print("Item Type:", type(item))
+                    print("Item:", item)
+                    price_str = item['prod_price']
                     numeric_price = float(price_str.split()[0])  # '799.00' from '799.00 TRY'
                 except (ValueError, IndexError):
                     numeric_price = 0.0  # fallback if format is invalid
@@ -52,6 +63,8 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
                 "id": item['id'],
                 "title": item['title'],
                 "description": item['description'],
+                "color": item.get('color', ""),
+                "department": item.get('department', ""),
                 "type": "image",
                 "image": item['image'],
                 "file": item['link'],
@@ -83,7 +96,7 @@ def store_generated_message(userId, chatId, prompt, response, intend, runtime, i
         "userId": userId,
         "price": response['price'],
         "modelInfo": {
-            'eachlabs_model': eachlabs_info,
+            'eachlabs_models': eachlabs_info,
             'llm_models': llm_model_info
         },
         "intend": intend,

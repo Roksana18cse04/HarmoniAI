@@ -27,8 +27,12 @@ def get_products_from_xml(url):
             "brand": get("g:brand"),
             "color": get("g:color") or get("color"),
             "gender": get("g:gender"),
-            "category": get("g:product_type")
         }
+        
+        if get("g:product_type"):
+            parts = get("g:product_type").split(">")
+            product['department'] = parts[-1].strip()
+        
         products.append(product)
 
     print(f"-------- Fetched {len(products)} products from {url}")
