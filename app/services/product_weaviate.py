@@ -183,10 +183,10 @@ def deduplicate_products(products):
 def fetch_all_products():  
     urls = [
         "https://www.kappa-tr.com/feed/standartV3",
-        # "https://tr.ecco.com/feed/googleV2",
-        # "https://www.suvari.com.tr/feed/googleV2",
-        # "https://www.alvinaonline.com/tr/p/XMLProduct/GoogleMerchantXML",
-        # "https://www.perspective.com.tr/feed/facebook",
+        "https://tr.ecco.com/feed/googleV2",
+        "https://www.suvari.com.tr/feed/googleV2",
+        "https://www.alvinaonline.com/tr/p/XMLProduct/GoogleMerchantXML",
+        "https://www.perspective.com.tr/feed/facebook",
     ]
 
     all_products = []
