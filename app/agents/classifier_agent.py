@@ -125,7 +125,7 @@ def classify_prompt_agent(platform, model, prompt: str, categories_list: list) -
     
     try:
         response = llm.generate_response(system_prompt, prompt)
-        print(response['content'])
+        print("classifier agent response-------------", response['content'])
         return response
     
     except json.JSONDecodeError:
