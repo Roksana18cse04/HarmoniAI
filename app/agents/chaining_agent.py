@@ -30,7 +30,7 @@ def is_image_url(url: str) -> bool:
 def fetch_models(models_info, model_category):
     models_list = models_info["result"]["result"]["models"]
     print(model_category)
-    category_id = model_category["id"] 
+    category_id = model_category["category_id"] 
     if category_id is not None:
         models = [{
             "title": model["title"], 
@@ -112,7 +112,11 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
     if intent=="unknown":
         return {
             "user_prompt": prompt,
-            "response": "Sorry, I can't help with that.",
+            "response": {
+                'status': 'failed',
+                'output': "Sorry, I can't help with that.",
+                'price': 0.0
+            },
             "model_info": {
                 'llm_models': {
                     "name": model
@@ -297,8 +301,7 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
 
         return {
             "user_prompt": prompt,
-            "response": response['output'],
-            "price": response['price'],
+            "response": response,
             "model_info": {
                 'llm_models': {
                     'name': model,
@@ -312,17 +315,24 @@ def run_multi_agent_chain( user_id, chat_id, platform, model, prompt, full_promp
         }
     else:
         # fetch models based on the classified category
-        models= fetch_models(models_info, model_category)
+        models= fetch_models(models_info, model_category["content"])
         if not models:
             return {
                 "user_prompt": prompt,
-                "eachlabs_models": [],
-                "message": "Currently, model is not available",
-                # "runtime": round( time.time()-start_time, 3)
+                "response": {
+                    'status': 'success',
+                    'output': "Currently, model is not available",
+                    'price': 0.0
+                },
+                "intend": intent
             }
         return {
             "user_prompt": prompt,
-            "eachlabs_models": models,
+            "response": {
+                'status': 'success',
+                'output': models,
+                'price': 0.0
+            },
             "intend": intent,
             # "runtime": round( time.time()-start_time, 3)
         }
