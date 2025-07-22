@@ -27,6 +27,19 @@ The system is built with a FastAPI backend and utilizes the **Model Context Prot
 7.  **Weaviate Database:** Agents query the Weaviate vector database to retrieve relevant context (e.g., product information, articles) to enrich the prompts.
 8.  **Response Generation:** The agent generates a final response, which may include text, data, or recommendations for other models (e.g., suggesting a text-to-image model).
 
+## Role of EachLabs Model Registry
+
+The EachLabs service is a critical component that acts as a **dynamic model registry** for the HarmoniAI system. It allows the application to be highly flexible and extensible without requiring code changes to support new AI models.
+
+Here's how it works:
+
+1.  **Model Discovery:** At the start of a task, the `chaining_agent` queries the EachLabs API to get a complete, up-to-date catalog of all available AI models, including their capabilities, categories (e.g., `text-to-image`), and pricing.
+2.  **Intent Classification:** This catalog is used by the `classify_prompt_agent` to understand the range of possible user intents.
+3.  **Dynamic Model Recommendation:** Once the intent is known, the system can filter the catalog and recommend a list of suitable models to the user. For example, if the intent is to generate an image, the user is presented with a list of available text-to-image models.
+4.  **Execution:** The user selects a model, and the application then executes the task using that specific model.
+
+This approach decouples the application's core logic from the specific models it supports, making it easy to add or remove models from the system by simply updating the EachLabs registry.
+
 ## Technologies Used
 
 - **Backend:** FastAPI, Uvicorn
