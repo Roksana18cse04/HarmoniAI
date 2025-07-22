@@ -65,27 +65,35 @@ pip install -r requirements.txt
 
 ### 4. Set Up Environment Variables
 
-The application requires API keys and other secrets. Create a `.env` file in the root directory of the project. You can copy the example file if one exists, or create a new one.
+The application requires API keys and other secrets. Create a `.env` file in the root directory by copying the example file:
 
 ```bash
-# e.g., copy .env.example to .env
 cp .env.example .env
 ```
 
-Now, edit the `.env` file and add your credentials:
+Now, edit the `.env` file and add your credentials. Below is a description of each variable:
 
-```env
-# JWT
-JWT_ACCESS_SECRET="your_super_secret_jwt_key"
+#### LLM & AI Service Keys
+- **`OPENAI_API_KEY`**: Your secret API key for accessing OpenAI's services (e.g., GPT models).
+- **`GROQ_API_KEY`**: Your secret API key for the Groq LLM provider.
+- **`GEMINI_API_KEY`**: Your secret API key for Google's Gemini models.
+- **`EACHLABS_API_KEY`**: API key for the EachLabs service, which is used to fetch information about available AI models.
+- **`SERPAPI_KEY`**: API key for a service like SerpApi, allowing agents to perform live web searches for up-to-date information.
 
-# LLM API Keys
-OPENAI_API_KEY="sk-..."
-GROQ_API_KEY="gsk_..."
-GEMINI_API_KEY="..."
+#### Cloudflare R2 Object Storage
+These variables connect the application to a Cloudflare R2 bucket for file storage.
+- **`R2_ENDPOINT_URL`**: The API endpoint URL for your R2 bucket.
+- **`R2_ACCESS_KEY`**: The access key ID for your R2 account.
+- **`R2_SECRET_KEY`**: The secret access key for your R2 account.
+- **`R2_REGION`**: The region of your R2 bucket (e.g., "auto").
+- **`R2_BUCKET_NAME`**: The name of the R2 bucket to use.
+- **`R2_PUBLIC_BASE_URL`**: The public-facing base URL for accessing files in your bucket.
 
-# Weaviate (if applicable)
-WEAVIATE_URL="http://localhost:8080"
-```
+#### Application Security & Database
+- **`JWT_ACCESS_SECRET`**: A long, random, and secret string for signing and verifying JSON Web Tokens (JWTs) to secure the API.
+- **`WEAVIATE_HOST`**: The hostname for your Weaviate database's HTTP endpoint.
+- **`WEAVIATE_GRPC_HOST`**: The hostname for your Weaviate database's gRPC endpoint.
+- **`WEAVIATE_API_KEY`**: The authentication key for your Weaviate database instance.
 
 ## Running the Application
 
